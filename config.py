@@ -16,13 +16,17 @@ n = 3
 s = 1000
 d = 2
 det = 3
+train = 0.8
+test = 0.2
+algorithm = 'glasso'
+
 '''
 data arguments
 tg: type of graph, options: chain, er, sf
 tn: type of noise, options: ev, uv, exp, gum
 th: threshold for weighted matrix
 '''
-tg = 'er'
+tg = 'rt'
 tn = 'ev'
 th = 0.3
 
@@ -38,7 +42,8 @@ dt = 1.0
 
 
 '''
-loss arguments
+loss arguments=str, default=algorithm, help='choose structure learning algorithm')
+
 ev: whether to assume equal variances for likelihood objective
 l1: coefficient of L1 penalty of DAG matrix
 l2: coefficient of structure penalty
@@ -68,10 +73,9 @@ seed: seed value for randomness
 log: log on file (True) or print on console (False)
 gpu: gpu number, options: 0, 1, 2, 3, 4, 5, 6, 7
 '''
-seed = 6
+seed = 5
 log = False
 gpu = 0
-
 
 
 import argparse
@@ -84,6 +88,9 @@ def parse():
     p.add_argument('--s', type=int, default=s, help='number of samples')
     p.add_argument('--d', type=int, default=d, help='average degree of node')
     p.add_argument('--det', type=int, default=det, help='equal determinant for chain components')
+    p.add_argument('--train', type=float, default=train, help='the proportion of training data')
+    p.add_argument('--test', type=float, default=test, help='the proportion of testing data')
+    p.add_argument('--algorithm', type=str, default=algorithm, help='choose structure learning algorithm')
 
     p.add_argument('--tg', type=str, default=tg, help='type of graph, options: er, sf')
     p.add_argument('--tn', type=str, default=tn, help='type of noise, options: ev, uv, exp, gum')
