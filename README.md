@@ -17,7 +17,9 @@ Real Bayesian network from bnlearn;
 - (Done) Performance evaluation (KL-distance) on Undirected graph;
 
 - (Done) Overleaf: algorithm 1;
-- (TODO) Overleaf: algorithm 2 (in progress);
+- (Done) Overleaf: algorithm 2;
+- (Done) Overleaf: algorithm 3;
+- (Done) Overleaf: algorithm 4;
 - (TODO) Add R CLIME algorithm;
 - (TODO) Run experiments;
 - (TODO) Code for generate plot;
