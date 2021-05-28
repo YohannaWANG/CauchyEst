@@ -18,7 +18,6 @@ import config
 p = config.setup()
 lgr = p.logger
 
-
 """
 Function: (Data) Generate synthetic DAG data (linear)
 """
@@ -388,7 +387,6 @@ def eval_un(train_data, test_data, A_bin):
     Evaluate the KL disctance between undirected graph using the D_KL equation 
      for multivarite normal distribution:
 
-    
     Arguments:
         data    : Input data;
     
@@ -414,7 +412,6 @@ def regression(data, A_bin):
         
     Return:
         A_est   : Graph with learned coefficients
-        
     '''
     n = p.n
     A_est = np.zeros((n, n))
@@ -441,10 +438,43 @@ def regression(data, A_bin):
     return A_est
 
 
+def sigma_estimator(data, A_est):
+    '''
+    Algorithm 1: Recovering the varianceσgiven an estimatêAof coefficientsA
+    '''
+    n = p.n
+    Sigma_hat = {}
+    for child in range(n):
+        parents = [list(pa) for pa in (np.nonzero(A_est[:, child]))]
+        parents = list(itertools.chain(*parents))
+
+        ''' Calculate a_est'''
+
+        index_est = A_est[:, child]
+        a_est = index_est[index_est != 0]
+
+        ''' Calculate sigma_y (true)'''
+
+        if len(a_est) == 0:
+            sigma_hat = np.var(data[:, child])
+
+        elif len(a_est) == 1:
+            sigma_hat = np.var(data[:, child] - a_est *
+                               np.transpose(data[:, parents]))
+
+        elif len(a_est) > 1:
+            sigma_hat = np.var(
+                data[:, child] - np.matmul(np.array(a_est), np.transpose(data[:, parents])))
+        
+        #print('sigma_hat', sigma_hat)
+        Sigma_hat[child] = sigma_hat
+    
+    return Sigma_hat
+
 
 def least_square(data, A_bin):
     '''
-    Algorithm 1:
+    Algorithm 2:
         Recovery algorithm for general Bayesian networks via Least Squares estimators
 
     Learn coefficients through linear regression
@@ -481,7 +511,7 @@ def least_square(data, A_bin):
 
 def median_estimator(data, A_bin):
     '''
-    Algorithm 2: 
+    Algorithm 3: 
         Recovery algorithm for tree-skeletoned Bayesian networks
 
     Learn coefficients use median
@@ -493,8 +523,103 @@ def median_estimator(data, A_bin):
     Return:
         A_est   : Graph with learned coefficients
     '''
+    n, d = p.n, p.d
+    A_est = np.zeros((n, n))
+
+    for child in range(n):
+        parents = [list(pa) for pa in (np.nonzero(A_bin[:, child]))]
+        parents = list(itertools.chain(*parents))
+
+        if len(parents) > 0:
+            '''
+            P: number of parents, 1 <= p <= d
+            '''
+            P = len(parents)
+
+            A_est_s = []  
+            for s in range(data.shape[0] - d + 1):
+                X = data[s:s+P, parents]
+                Y = np.expand_dims(data[s:s+P, child], axis=1)
+                
+                a_est_s = np.matmul(np.linalg.inv(X), Y)
+                A_est_s = np.append(A_est_s, a_est_s)
+            
+            ''' Find the median '''                
+            A_est_s = A_est_s.reshape(-1, P).T
+            A_est_median = np.median(A_est_s, axis=1)
+
+            for i in range(len(parents)):
+                A_est[parents[i], child] = A_est_median[i]
+
+    return A_est
+                
+def heuristic_extension(data, A_bin):
+    
+    import scipy.linalg
+    '''
+    Algorithm 4: Recovery algorithm for general Bayesian networks.
+    
+    Estimate L_hat using empirical covariance matrix M_hat.
+    Learn coefficients from median
+    
+    Arguments:
+        data    : Input data;
+        A_bin   : The graph structure 
+
+    Return:
+        A_est   : Graph with learned coefficients
+    '''
+    
+    n, d = p.n, p.d
+    A_est = np.zeros((n, n))
+    for child in range(n):
+        parents = [list(pa) for pa in (np.nonzero(A_bin[:, child]))]
+        parents = list(itertools.chain(*parents))
 
 
+        ''' Calculate M: covariance matrix among parents'''
+        if len(parents) > 0:
+            if len(parents) == 1:
+                M = np.var(data[:, parents].T)
+            else:
+                M = np.cov(data[:, parents].T)
+     
+            
+            ''' Compute Cholesky decomposition M_hat = L_hat * L_hat^T'''
+            L = scipy.linalg.cholesky(M, lower=True)
+            '''
+            p: number of parents, 1 <= p <= d
+            '''
+            P = len(parents)
+
+            A_est_s = []  
+            
+            for s in range(data.shape[0] - d + 1):
+                X = data[s:s+P, parents]
+                Y = np.expand_dims(data[s:s+P, child], axis=1)     
+                
+                a_est_s = np.matmul(np.linalg.inv(X), Y)
+                A_est_s = np.append(A_est_s, a_est_s)
+            
+            ''' Find the median '''                
+            A_est_s = A_est_s.reshape(-1, P).T
+            MED = np.median(np.matmul(np.transpose(L), A_est_s), axis=1)
+            
+            ''' Define estimates A_hat '''
+            A_est_i = np.matmul(np.linalg.inv(np.transpose(L)), np.transpose(MED))
+            
+            for i in range(len(parents)):
+                A_est[parents[i], child] = A_est_i[i]
+                
+            
+    return A_est
+
+
+
+"""
+Performance evaluation:
+    KL-Distance VS sample size
+"""
     
 def DCP(data, A_true, A_est):
     '''
@@ -632,12 +757,6 @@ def ground_truth_cov(data, A_bin):
     return dic_cov_idx, dic_cov_val, gt_cov
      
 
-"""
-Performance evaluation:
-    KL-Distance VS sample size
-"""
-
-
 def my_code():
     '''
     Run our algorithm
@@ -652,8 +771,11 @@ def my_code():
     
     dic_cov_idx, dic_cov_val, cov_gt = ground_truth_cov(train_data, B_DAG)    
     
-
+    #median_estimator(data, B_DAG)
+    A_est = heuristic_extension(data, B_DAG)
+    sigma_estimator(data, A_est)
     
+    """
     ''' For directed graph (first two) and undirected graph (glasso, empirical)'''
     if p.algorithm == 'regression':
         A_est = regression(test_data, B_DAG)
@@ -679,7 +801,7 @@ def my_code():
     print('W dag = ', W_DAG)
     #print('KL distance', kl_reg)
 
-
+    """
 if __name__ == '__main__':
 
     my_code()
