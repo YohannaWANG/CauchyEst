@@ -12,21 +12,31 @@ n: number of nodes
 s: number of samples
 d: average degree of node
 '''
-n = 3
+n = 46
 s = 1000
-d = 2
+d = 5
 det = 3
-train = 0.8
-test = 0.2
-algorithm = 'glasso'
+train = 0.9
+test = 0.1
 
 '''
 data arguments
-tg: type of graph, options: chain, er, sf
+choice: choice which real bnlearn data to load. 
+load: choice whether load synthetic data or real bnlearn data
+options: 'syn', 'real'
+options: 'ecoli70', 'magic-niab', 'magic-irri', 'arth150', #{'healthcare', 'sangiovese', 'mehra'}
+'''
+load = 'real'
+choice = 'ecoli70'
+
+
+'''
+data arguments
+tg: type of graph, options: chain, er, sf, rt
 tn: type of noise, options: ev, uv, exp, gum
 th: threshold for weighted matrix
 '''
-tg = 'rt'
+tg = 'er' 
 tn = 'ev'
 th = 0.3
 
@@ -90,7 +100,10 @@ def parse():
     p.add_argument('--det', type=int, default=det, help='equal determinant for chain components')
     p.add_argument('--train', type=float, default=train, help='the proportion of training data')
     p.add_argument('--test', type=float, default=test, help='the proportion of testing data')
-    p.add_argument('--algorithm', type=str, default=algorithm, help='choose structure learning algorithm')
+    
+    p.add_argument('--choice', type=str, default=choice, help='choose which real bnlearn data to load')
+    p.add_argument('--load', type=str, default=load, help='either load synthetic or real data')
+
 
     p.add_argument('--tg', type=str, default=tg, help='type of graph, options: er, sf')
     p.add_argument('--tn', type=str, default=tn, help='type of noise, options: ev, uv, exp, gum')

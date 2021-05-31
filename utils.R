@@ -40,52 +40,53 @@ load_data <- function(choice){
   ### Gaussian Bayesian networks
   
   # Load medium network
-  if (choice = "ecoli70"){
+  if (choice == "ecoli70"){
     # This will load the bn object
     # load("ecoli70.rda") 
-    network <- readRDS("ecoli70.rds")
+    network <- readRDS("Data/ecoli70.rds")
   }
-  else if(choice = "magic-niab"){
-    network <- readRDS("magic-niab.rds")
+  else if(choice == "magic-niab"){
+    network <- readRDS("Data/magic-niab.rds")
   }
   # Load large network
-  else if(choice = "magic-irri"){
-    network <- readRDS("magic-irri.rds")
+  else if(choice == "magic-irri"){
+    network <- readRDS("Data/magic-irri.rds")
   }
   # Load very large network
-  else if(choice = "arth150"){
-    network <- readRDS("arth150.rds")
+  else if(choice == "arth150"){
+    network <- readRDS("Data/arth150.rds")
   }
   
   ###  Conditional Linear Gaussian Bayesian Networks
   
   # Load small network
-  else if(choice = "healthcare"){
-    network <- readRDS("healthcare.rds")
+  else if(choice == "healthcare"){
+    network <- readRDS("Data/healthcare.rds")
   }
   
-  else if(choice = "sangiovese"){
-    network <- readRDS("sangiovese.rds")
+  else if(choice == "sangiovese"){
+    network <- readRDS("Data/sangiovese.rds")
   }
   
   # Load medium networks (with no NAN parameters)
-  else if(choice = "mehra"){
-    network <- readRDS("sangiovese.rds")
+  else if(choice == "mehra"){
+    network <- readRDS("Data/sangiovese.rds")
   }
   return(network)
 }
 
 get_graph <- function(choice){ 
+  library(bnlearn)
   network <- load_data(choice)
   
   " Get binary adj matrix and extract the coefficients between all parents and children"
   G_binary <- amat(network)
   coef <- coefficients(network)
-  
   nodes <- unlist(dimnames(G_binary)[1])
   
   n <- nrow(G_binary)
   p <- ncol(G_binary)
+
   " X = AX + b 
   Initialize an all-zero matrix to store inception value (b) "
   interception <- matrix(0, n, p)
@@ -100,9 +101,11 @@ get_graph <- function(choice){
   for (i in 1:nrow(G_binary)) {
     " Then find each coefficient pairs" 
     temp_i <- coef[i]
+
     " Name of the children " 
     col_name <- names(coef[i])
-    print(paste("col_name",col_name))
+    row_name <- names(coef[i])
+
     " Given children node, find the coefficients with its parents"
     rel_i <- unlist(unname(temp_i))
     
@@ -123,20 +126,44 @@ get_graph <- function(choice){
         
         " Generate weighted adj matrix: add the coefficients into G_weighted " 
         if((!is.na(row_name) ) & (!is.na(col_name))){
-          print(G_binary[row_name, col_name])
+          #print(G_binary[row_name, col_name])
           G_weighted[row_name, col_name] <- a_ij
         }
       }
     }
   }
-  print("G_weighted")
-  print(G_weighted)
-  print("interception")
-  print(interception)
   return(list(G_binary, G_weighted, interception))
 }
 
+" Function: Estimate sparse undirected graphical models. i.e. Gaussian precision matrix
+      sumg: High-deimensional Sparse Undirected Graphical Models
+  Two estimation preceduresbased on column by column regression:
+    (1) Tuning-Insensitive Graph Estimation and Regression based on square root Lasso (tiger);
+    (2) The Constrained L1 Minimization for Sparse Precision Matrix Estimation using either
+        L1 penalty (clime).
+  Notes: The optimization algorithm are implemented based on the alternating 
+          direction method of multipliers (ADMM) with linearization method and 
+          multi-stage screening of variables. 
+          Missing values can be tolerated for CLIME in the data matrix.
+"
+clime <- function(data){
+  "Function: run CLIME algorithm"
+  
+  library('flare')
+  out <- sugm(data, method='clime')
+  clime_cov <- out$sigma
 
+  return(clime_cov)
+}
+
+tiger <- function(data){
+  " Function: run TIGER algorithm"
+  library('flare')
+  out <- sugm(data, method='tiger')
+  tiger_cov <- out$sigma
+
+  return(tiger_cov)
+}
 
 
 
