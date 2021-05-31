@@ -165,5 +165,14 @@ tiger <- function(data){
   return(tiger_cov)
 }
 
+glasso_r <- function(data){
+  library(glasso)
+  #data<-matrix(rnorm(3*10),ncol=3)
+  s <- var(data)
+  a <- glasso(s, rho=0.02)
+  glasso_est<-glasso(s,rho=.02, w.init=a$w, wi.init=a$wi)
+  glasso_cov <- glasso_est$w
+  return(glasso_cov)
+}
 
 

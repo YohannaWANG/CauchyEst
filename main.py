@@ -15,6 +15,9 @@ import networkx as nx
 from scipy import stats
 import matplotlib.pyplot as plt
 
+from sklearn.utils.testing import ignore_warnings
+from sklearn.exceptions import ConvergenceWarning
+
 import config
 
 from data import SynDAG
@@ -99,6 +102,38 @@ def tiger(data):
 
     return tiger_cov
 
+def glasso_R(data):
+    '''
+    learn cov_est use TIGER algorithm.
+    Paper: http://stat.wharton.upenn.edu/~tcai/paper/Precision-Matrix.pdf
+    R package: https://cran.r-project.org/web/packages/flare/index.html
+    
+    Arguments:
+        data    : Input test data;
+    
+    Return:   
+        tiger_cov_est : Estimated empirical covariance matrix from testing data
+
+    '''
+
+    import rpy2.robjects as robjects
+    from rpy2.robjects.packages import STAP
+
+    import rpy2.robjects.numpy2ri
+    from rpy2.robjects import pandas2ri
+
+    pandas2ri.activate()
+    rpy2.robjects.numpy2ri.activate()
+    robjects.r.source("utils.R")
+
+    with open('utils.R', 'r') as f:
+        string = f.read()
+
+    bayesian_network = STAP(string, "bayesian_network")
+    glasso_cov = bayesian_network.glasso_r(data)
+    print('glasso_cov', glasso_cov)
+    return glasso_cov
+
 def empirical_est(data):
     '''
     The empirical estimator (like in Appendix C of https://arxiv.org/pdf/1710.05209.pdf);
@@ -110,11 +145,16 @@ def empirical_est(data):
     Return:   
         cov_est : Estimated empirical covariance matrix from testing data
     '''
-    # TODO: Q    np.cov(data.T)
-    return (np.matmul(data.T, data)/p.s)
+    #return  np.cov(data.T) #(np.matmul(data.T, data)/p.s)
+    print('np cov is ', np.cov(data.T))
+    empir_cov_np = np.cov(data.T, bias=True)
+    empir_cov = np.matmul(data.T, data)/p.s
+    print('empir_cov is ', empir_cov)
+    
+    return empir_cov_np, empir_cov
 
-
-def glasso(data):
+@ignore_warnings(category=ConvergenceWarning)
+def glasso(data): 
 
     from sklearn.covariance import GraphicalLasso
 
@@ -128,7 +168,7 @@ def glasso(data):
         cov_est : Graph with learned coefficients
         
     '''
-    cov = GraphicalLasso().fit(data)
+    cov = GraphicalLasso(mode='lars', max_iter=2000).fit(data)
     cov_est = np.around(cov.covariance_, decimals=3)
     
     return cov_est
@@ -165,7 +205,7 @@ def eval_un(train_data, test_data, A_bin):
         cov_est : Graph with learned coefficients   
     '''
     _, _, cov_gt = ground_truth_cov(train_data, A_bin)
-    cov_est = glasso(test_data)
+    cov_est = glasso(test_data, tol=0.01, max_iter=1000, normalize=True)
     
     dkl = DKL_ud(cov_est, cov_gt)
     return dkl   
@@ -722,14 +762,39 @@ def my_code_ud():
     train_data, test_data = split_data(data)   
     
     dic_cov_idx, dic_cov_val, cov_gt = ground_truth_cov(train_data, B_DAG)    
-
-    cov_glasso_est = glasso(test_data)
-    cov_emp_est = empirical_est(test_data)
+    
+    ''' Undirected graph'''
+    cov_glasso_est = glasso_R(test_data)
+    cov_emp_np, cov_emp_est = empirical_est(test_data)
+    cov_clime_est  = clime(test_data)
+    cov_tiger_est  = tiger(test_data)
     
     kl_glasso = DKL_ud(cov_glasso_est, cov_gt)    
+    kl_emp_np = DKL_ud(cov_emp_np, cov_gt)
     kl_emp = DKL_ud(cov_emp_est, cov_gt)  
+    kl_clime = DKL_ud(cov_clime_est, cov_gt)
+    kl_tiger = DKL_ud(cov_tiger_est, cov_gt)
     
-    return kl_glasso, kl_emp
+    
+    ''' Directed graph'''
+    #A_est_reg = regression(test_data, B_DAG)
+    A_est_ls  = least_square(test_data, B_DAG)
+    A_est_cau_med = CauchyEst_median(data, B_DAG)
+    A_est_he_med = heuristic_extension_median(data, B_DAG)
+    #A_est_cau_trimmed = CauchyEst_trimmed(test_data, B_DAG)
+    #A_est_he_trimmed = heuristic_extension_trimmed(data, B_DAG)
+    
+    
+    #sigma_reg = sigma_estimator(data, A_est_ls)
+    
+    #kl_reg = DCP(train_data, test_data, W_DAG, A_est_reg)
+    kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls)
+    kl_cau_med = DCP(train_data, test_data,  W_DAG, A_est_cau_med)
+    kl_he_med  = DCP(train_data, test_data,  W_DAG, A_est_he_med)
+    #kl_cau_tri = DCP(train_data, test_data,  W_DAG, A_est_cau_trimmed)
+    #kl_he_tri  = DCP(train_data, test_data,  W_DAG, A_est_he_trimmed)
+    
+    return kl_glasso, kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med
 
 def main():
         
@@ -741,7 +806,10 @@ def main():
     KL_HE_TRI  = []
     
     KL_GLASSO = []
-    KL_EMP   =  []
+    KL_EMP_NP = []
+    KL_EMP    = []
+    KL_CLIME  = []
+    KL_TIGER  = []
     
     '''    
     for i in range(3):
@@ -756,15 +824,28 @@ def main():
     '''
     for i in range(1):
         print('i = ', i)
-        kl_ls, kl_cau_med, kl_he_med = my_code() #kl_cau_tri, kl_he_tri, 
+ 
+        kl_glasso,  kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med = my_code_ud()
+        
+        KL_GLASSO.append(kl_glasso)
+        KL_EMP_NP.append(kl_emp_np)
+        KL_EMP.append(kl_emp)
+        KL_CLIME.append(kl_clime)
+        KL_TIGER.append(kl_tiger)
         
         KL_LS.append(kl_ls)        
         KL_CAU_MED.append(kl_cau_med)
         KL_HE_MED.append(kl_he_med)
-        
         #KL_CAU_TRI.append(kl_cau_tri)
         #KL_HE_TRI.append(kl_he_tri)
     
+    
+    print('KL_GLASSO = ', np.mean(KL_GLASSO))
+    print('KL_EMP_NP = ', np.mean(KL_EMP_NP))
+    print('KL_EMP = ', np.mean(KL_EMP))
+    print('KL_CLIME = ', np.mean(KL_CLIME))
+    print('KL_TIGER = ', np.mean(KL_TIGER))
+
     print('KL_LS  =', np.mean(KL_LS))
     print('KL_MED = ', np.mean(KL_CAU_MED))  # cauchy median
     print('KL_HE = ', np.mean(KL_HE_MED))
@@ -776,14 +857,7 @@ def main():
 
 if __name__ == '__main__':
     
-    Input = SynDAG(p)
-    #Input.visualise()
-    W_DAG = Input.A
-    B_DAG = Input.B
-    data = Input.X 
-    #main()
-    clime(data)
-
+    main()
 
 
 

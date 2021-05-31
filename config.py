@@ -12,8 +12,8 @@ n: number of nodes
 s: number of samples
 d: average degree of node
 '''
-n = 46
-s = 1000
+n = 50
+s = 5000
 d = 5
 det = 3
 train = 0.9
@@ -26,7 +26,7 @@ load: choice whether load synthetic data or real bnlearn data
 options: 'syn', 'real'
 options: 'ecoli70', 'magic-niab', 'magic-irri', 'arth150', #{'healthcare', 'sangiovese', 'mehra'}
 '''
-load = 'real'
+load = 'syn'
 choice = 'ecoli70'
 
 
