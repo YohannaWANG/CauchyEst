@@ -8,7 +8,20 @@
 ## Data Folder:
 Real Bayesian network from bnlearn;
 
-## main.py (To be seperated into data.py, eval.py, algo.py, and main.py)
+## data.py
+
+### Graph
+```diff
++ Tree structure graph
++ ER random graph
+```
+
+### Data
+```diff
++ Synthetic linear SEM data
++ Real Bnlearn data
+```
+## main.py (eval.py, algo.py, and main.py)
 
 ```diff
 + (Done) General synthetic SEM data;
@@ -41,6 +54,8 @@ Real Bayesian network from bnlearn;
 Set parameters for Bayesian network (eg. node number, graph degree, sample size)
 
 ## utils.R
-Load bnlearn graph;
-CLIME algorithm;
-TIGER algorithm.
+```diff
++ Load bnlearn graph;
++ CLIME algorithm;
++ TIGER algorithm.
+```
