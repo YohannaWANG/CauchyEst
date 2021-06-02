@@ -12,10 +12,10 @@ n: number of nodes
 s: number of samples
 d: average degree of node
 '''
-n = 100
+n = 3
 s = 2000
-d = 5
-ill = 2
+d = 2
+ill = 1
 
 batch = 30
 
@@ -38,45 +38,14 @@ tn: type of noise, options: ev, uv, ca, ill, exp, gum
 th: threshold for weighted matrix
 '''
 tg = 'er' 
-tn = 'uv'
+tn = 'ill'
 th = 0.3
 
 '''
 data arguments
 sf: scaling factor for range of binary DAG adjacency
-c: number of chain components
-dt: determinant of covariance matrix
 '''
 sf = 1.0
-c = 3
-dt = 1.0
-
-
-'''
-loss arguments=str, default=algorithm, help='choose structure learning algorithm')
-
-ev: whether to assume equal variances for likelihood objective
-l1: coefficient of L1 penalty of DAG matrix
-l2: coefficient of structure penalty
-k1: coefficient of L1 penalty of undirected matrix
-'''
-ev = True
-l1 = 2e-2
-l2 = 1e-4
-k1 = 1e-3
-eta = 1
-
-
-'''
-train arguments
-lr: learning rate of Adam optimiser
-ep: number of epochs of training
-ck: number of iterations between each checkpoint
-'''
-lr = 1e-3
-ep = 5000
-ck = 5000
-
 
 '''
 miscellaneous arguments
@@ -112,23 +81,12 @@ def parse():
     p.add_argument('--th', type=float, default=th, help='threshold for weighted matrix')
 
     p.add_argument('--sf', type=float, default=sf, help='scaling factor for range of binary DAG adjacency')    
-    p.add_argument('--c', type=int, default=c, help='number of chain components')
-    p.add_argument('--dt', type=float, default=dt, help='determinant of covariance matrix')
+
 
     def str2bool(v):
         if isinstance(v, bool): return v
         if v.lower() in ('no', 'false', 'f', 'n', '0'): return False
         else: return True
-
-    p.add_argument("--ev", type=str2bool, default=ev, help="whether to assume equal variances for likelihood objective")
-    p.add_argument('--l1', type=float, default=l1, help='coefficient of L1 penalty of DAG matrix')
-    p.add_argument('--l2', type=float, default=l2, help='coefficient of structure penalty')
-    p.add_argument('--k1', type=float, default=k1, help='coefficient of L1 penalty of undirected matrix')
-    p.add_argument('--eta', type=float, default=eta, help='coefficient of structure penalty (h)')
-
-    p.add_argument('--lr', type=float, default=lr, help='learning rate of Adam optimiser')
-    p.add_argument('--ep', type=int, default=int(ep), help='number of epochs of training')
-    p.add_argument('--ck', type=int, default=ck, help='number of iterations between each checkpoint')
     
     p.add_argument('--seed', type=int, default=seed, help='seed value for randomness')
     p.add_argument("--log", type=str2bool, default=log, help="log on file (True) or print on console (False)")

@@ -23,7 +23,7 @@ import config
 from data import SynDAG
 
 p = config.setup()
-lgr = p.logger
+#lgr = p.logger
 
 
 
@@ -362,9 +362,10 @@ def least_square(data, A_bin):
             '''
             Notes: A_hat = (X^T*X)^{-1}*X^T*Y
             '''
-            #a_est = np.matmul(np.matmul(np.expand_dims((1/np.matmul(np.transpose(X), X)),
-            #                                           axis=0), np.expand_dims(np.transpose(X), axis=0)), Y)
+            #a_est1 = np.matmul(np.matmul(np.linalg.inv(np.matmul(np.transpose(X), X)), np.transpose(X)), Y)
             a_est = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), Y)
+
+            
             A_est[parents, child] = a_est
                 
     return A_est
@@ -620,7 +621,7 @@ Performance evaluation:
     KL-Distance VS sample size
 """
     
-def DCP(train_data, test_data, A_true, A_est):
+def DCP(train_data, test_data, A_true, A_est, M_gt):
     '''
     Performance evaluation (D_cp distance over all samples)
 
@@ -634,7 +635,8 @@ def DCP(train_data, test_data, A_true, A_est):
         DKL = sum(DCP) KL divergence. 
     '''
     n = p.n
-    DCP = np.array([])
+    DCP1 = np.array([])
+    DCP2 = np.array([])
     
     for child in range(n):
         parents = [list(pa) for pa in (np.nonzero(A_true[:, child]))]
@@ -646,7 +648,8 @@ def DCP(train_data, test_data, A_true, A_est):
             M = np.var(train_data[:, parents].T)
         else:
             M = np.cov(train_data[:, parents].T)
-
+            
+        M2 = M_gt[np.ix_(parents, parents)]
         #child_data = data[:, child]
         #parents_data = data[:, parents] for each nodeuniform variance varied from (1,2) 
 
@@ -657,6 +660,7 @@ def DCP(train_data, test_data, A_true, A_est):
         
         a_true = index_true[index_true != 0]
         a_est = index_est[index_est != 0]
+        print('child is ', child, ' parents is ', parents, 'a_hat is', a_est)
 
         ''' delta = [a_true - a_est]'''
 
@@ -682,6 +686,8 @@ def DCP(train_data, test_data, A_true, A_est):
             
             sigma_y = np.var(
                 train_data[:, child] - np.matmul(np.array(a_true), np.transpose(train_data[:, parents])))
+        
+        print('sigma_hat = ', sigma_hat)
 
         ''' DCP can be calculated as follows: '''
         #print('sigma_hat ', sigma_hat)
@@ -692,14 +698,28 @@ def DCP(train_data, test_data, A_true, A_est):
         else:
             DMD = np.matmul(np.matmul(np.transpose(
                             delta), M), delta)/(2 * np.square(sigma_hat))
-            
-
-        dcp = np.log(sigma_hat/sigma_y) + (np.square(sigma_y) -
+        dcp1 = np.log(sigma_hat/sigma_y) + (np.square(sigma_y) -
                                            np.square(sigma_hat))/(2*np.square(sigma_hat)) + DMD
+        
+        if len(delta) == 1:
+            DMD2 = (delta * M2 * delta)/(2 * np.square(sigma_hat))
 
-        DCP = np.append(DCP, dcp)
+        else:
+            DMD2 = np.matmul(np.matmul(np.transpose(
+                            delta), M), delta)/(2 * np.square(sigma_hat))       
+            
+        dcp2 = np.log(sigma_hat/sigma_y) + (np.square(sigma_y) -
+                                           np.square(sigma_hat))/(2*np.square(sigma_hat)) + DMD2
 
-    return np.sum(DCP)
+
+        DCP1 = np.append(DCP1, dcp1)
+        DCP2 = np.append(DCP2, dcp2)
+    KL1 = np.sum(DCP1)
+    KL2 = np.sum(DCP2)
+    print('KL1', KL1)
+    print('KL2', KL2)
+
+    return KL2#np.sum(DCP1)
 
 
 def split_data(data):
@@ -723,7 +743,7 @@ def split_data(data):
     
 
 
-def ground_truth_cov(data, A_bin):
+def ground_truth_cov(data, A_bin, M_gt):
     '''
     Given training data, get the ground truth covariance matrix between each
         [child, parents] data, and the covariance matrix over whole training data.
@@ -741,6 +761,8 @@ def ground_truth_cov(data, A_bin):
     dic_cov_idx = {}
     dic_cov_val = {}
     
+    dic_cov_val_gt = {}
+    
     for child in range(n):
         parents = [list(pa) for pa in (np.nonzero(A_bin[:, child]))]
         parents = list(itertools.chain(*parents))
@@ -750,70 +772,49 @@ def ground_truth_cov(data, A_bin):
         '''
         if len(parents) == 0:
             M = 0
+            M2 = 0
         elif len(parents) == 1:
             M = np.var(data[:, parents].T)
+            M2 = M_gt[np.ix_(parents, parents)]
         elif len(parents) > 1:
             M = np.cov(data[:, parents].T)
+            M2 = M_gt[np.ix_(parents, parents)]
+
         else:
             raise ValueError('unknown parents size')
             
         dic_cov_idx[child] = parents
         dic_cov_val[child] = M
+        dic_cov_val_gt[child] = M2
         
     gt_cov = np.cov(data.T)
     
-    return dic_cov_idx, dic_cov_val, gt_cov
-     
-
-def my_code():
-    '''
-    Run our algorithm
-    '''
-    Input = SynDAG(p)
-    #Input.visualise()
-    W_DAG = Input.A
-    B_DAG = Input.B
-    data = Input.X 
-    
-    train_data, test_data = split_data(data)   
-    
-    dic_cov_idx, dic_cov_val, cov_gt = ground_truth_cov(train_data, B_DAG)    
-    
-    
-    ''' Run our algorithm '''
-    #A_est_reg = regression(test_data, B_DAG)
-    A_est_ls  = least_square(test_data, B_DAG)
-    A_est_cau_med = CauchyEst_median(data, B_DAG)
-    A_est_he_med = heuristic_extension_median(data, B_DAG)
-    #A_est_cau_trimmed = CauchyEst_trimmed(test_data, B_DAG)
-    #A_est_he_trimmed = heuristic_extension_trimmed(data, B_DAG)
-    
-    
-    #sigma_reg = sigma_estimator(data, A_est_ls)
-    
-    #kl_reg = DCP(train_data, test_data, W_DAG, A_est_reg)
-    kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls)
-    kl_cau_med = DCP(train_data, test_data,  W_DAG, A_est_cau_med)
-    kl_he_med  = DCP(train_data, test_data,  W_DAG, A_est_he_med)
-    #kl_cau_tri = DCP(train_data, test_data,  W_DAG, A_est_cau_trimmed)
-    #kl_he_tri  = DCP(train_data, test_data,  W_DAG, A_est_he_trimmed)
-    
-
-    return kl_ls, kl_cau_med, kl_he_med  # kl_cau_tri, kl_he_tri,
+    return dic_cov_idx, dic_cov_val, dic_cov_val_gt, gt_cov
     
 
 def my_code_ud():
     
     Input = SynDAG(p)
-    #Input.visualise()
+    Input.visualise()
     W_DAG = Input.A
+
     B_DAG = Input.B
     data = Input.X 
+    Z = Input.Z
+    
+    I = np.identity(p.n)
+    A = np.linalg.inv(I - W_DAG)
+    B = np.transpose(np.linalg.inv(I - W_DAG))
+    M = np.matmul(np.matmul(A, Z), B)
+    print('M is ', M)
     
     train_data, test_data = split_data(data)   
     
-    dic_cov_idx, dic_cov_val, cov_gt = ground_truth_cov(train_data, B_DAG)    
+    dic_cov_idx, dic_cov_val, dic_cov_val_gt, cov_gt = ground_truth_cov(train_data, B_DAG, M)    
+    print('dic_cov_emp', dic_cov_val)
+    print('dic_cov_gt ', dic_cov_val_gt)
     
+    """
     ''' Undirected graph'''
     #print('GLASSO')
     #cov_glasso_est = glasso_R(test_data)
@@ -856,26 +857,36 @@ def my_code_ud():
     
     #return kl_glasso, kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med
     return kl_emp_np, kl_emp, kl_clime, kl_ls, kl_ls_batch, kl_cau_med, kl_he_med
+"""
 
 def test():
     KL_LS = []
     
-    for i in range(20):
+    for i in range(1):
         Input = SynDAG(p)
-        #Input.visualise()
+        Input.visualise()
         W_DAG = Input.A
+        print('W_DAG', W_DAG)
         B_DAG = Input.B
         data = Input.X 
+        Z = Input.Z  # Z is sigma^2
+        
+        I = np.identity(p.n)
+        A = np.linalg.inv(I - W_DAG)
+        B = np.linalg.inv(np.transpose(I - W_DAG))
+        ''' '''        
+        M = np.matmul(np.matmul(A, Z), B)
+        print('M is ', M)
         
         train_data, test_data = split_data(data)   
         
-        dic_cov_idx, dic_cov_val, cov_gt = ground_truth_cov(train_data, B_DAG)  
+        dic_cov_idx, dic_cov_val, dic_cov_val_gt, cov_gt = ground_truth_cov(train_data, B_DAG, M)   
         #cov_emp_np, cov_emp_est = empirical_est(test_data)
         #kl_emp = DKL_ud(cov_emp_np, cov_gt)
-        #A_est_ls  = least_square(test_data, B_DAG)
+        A_est_ls  = least_square(test_data, B_DAG)
         
-        A_est_ls = batch_least_square(data, B_DAG)
-        kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls)
+        #A_est_ls = batch_least_square(data, B_DAG)
+        kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls, M)
         
         KL_LS.append(kl_ls)
     
@@ -947,8 +958,9 @@ def main():
 
 if __name__ == '__main__':
     
-    main()
-    #test()
+    #main()
+    test()
+    #my_code_ud()
 
 
 

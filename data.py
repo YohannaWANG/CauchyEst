@@ -31,7 +31,7 @@ class SynDAG:
             B, A = SynDAG.load_bnlearn(p)
         else: raise ValueError("No such data load selection")
         
-        self.X = SynDAG.SEM(A, p)
+        self.X, self.Z = SynDAG.SEM(A, p)
 
         self.A, self.B = A, B
 
@@ -234,24 +234,33 @@ class SynDAG:
                 numpy.ndarray: (s, 1) data matrix.
             '''
             if t == 'ev':
-                N = r.normal(scale=1.0, size=s)
+                sigma = 1.0
+                N = r.normal(scale=sigma, size=s)
             elif t == 'uv':
-                N = r.normal(scale=r.uniform(low=1.0, high=2.0), size=s)
+                sigma = r.uniform(low=1.0, high=2.0)
+                N = r.normal(scale=sigma, size=s)
+                #N = r.normal(scale=r.uniform(low=1.0, high=2.0), size=s)
             elif t == 'ca':
+                sigma = 1.0
                 N = np.random.standard_cauchy(size=s)
-            elif t == 'ill':
+            elif t == 'ill':    
                 if v in nodes_ill:
+                    print('v', v)
+                    sigma = 10**-10
                     N = r.normal(scale=10**-10, size=s)
                 else:
+                    sigma = 1
                     N = r.normal(scale=1.0, size=s)
             elif t == 'exp':
+                sigma = 1.0
                 N = r.exponential(scale=1.0, size=s)
             elif t == 'gum':
+                sigma = 1.0
                 N = r.gumbel(scale=1.0, size=s)
             else:
                 raise ValueError('unknown noise type')
 
-            return X @ I + N
+            return X @ I + N, np.square(sigma)
         if p.load == 'syn':
             n = p.n
         elif p.load == 'real':
@@ -266,12 +275,16 @@ class SynDAG:
         np.random.shuffle(nodes)    
         nodes_ill = nodes[:p.ill]
         
+        Sigma = []
+        
         for v in list(nx.topological_sort(G)):
-
             P = list(G.predecessors(v))
-            X[:, v] = _SEM(X[:, P], A[P, v], v, nodes_ill)
+            X[:, v], sigma = _SEM(X[:, P], A[P, v], v, nodes_ill)
+            Sigma.append(sigma)
 
-        return X
+        Z = np.diag(Sigma)
+        
+        return X, Z
 
     def visualise(self, D=[], U=[], name='true'):
         '''
@@ -312,7 +325,14 @@ if __name__ == '__main__':
     W_DAG = Input.A
     B_DAG = Input.B
     data = Input.X 
-    print(data)
+    Z = Input.Z
+    I = np.identity(p.n)
+    A = np.linalg.inv(I - W_DAG)
+    B = np.transpose(np.linalg.inv(I - W_DAG))
+    M = np.matmul(np.matmul(A, Z), B)
+    print('M = ', M)
+    #print(data)
+    print(Z)
 
 
 
