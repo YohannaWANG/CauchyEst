@@ -12,12 +12,12 @@ n: number of nodes
 s: number of samples
 d: average degree of node
 '''
-n = 50
-s = 5000
+n = 100
+s = 2000
 d = 5
-det = 3
-train = 0.9
-test = 0.1
+ill = 2
+
+batch = 30
 
 '''
 data arguments
@@ -28,16 +28,17 @@ options: 'ecoli70', 'magic-niab', 'magic-irri', 'arth150', #{'healthcare', 'sang
 '''
 load = 'syn'
 choice = 'ecoli70'
-
+train = 0.9
+test = 0.1
 
 '''
 data arguments
 tg: type of graph, options: chain, er, sf, rt
-tn: type of noise, options: ev, uv, exp, gum
+tn: type of noise, options: ev, uv, ca, ill, exp, gum
 th: threshold for weighted matrix
 '''
 tg = 'er' 
-tn = 'ev'
+tn = 'uv'
 th = 0.3
 
 '''
@@ -97,9 +98,10 @@ def parse():
     p.add_argument('--n', type=int, default=n, help='number of nodes')
     p.add_argument('--s', type=int, default=s, help='number of samples')
     p.add_argument('--d', type=int, default=d, help='average degree of node')
-    p.add_argument('--det', type=int, default=det, help='equal determinant for chain components')
+    p.add_argument('--batch', type=int, default=batch, help='number of batch size')
     p.add_argument('--train', type=float, default=train, help='the proportion of training data')
     p.add_argument('--test', type=float, default=test, help='the proportion of testing data')
+    p.add_argument('--ill', type=int, default=ill, help='number of ill conditioned nodes')
     
     p.add_argument('--choice', type=str, default=choice, help='choose which real bnlearn data to load')
     p.add_argument('--load', type=str, default=load, help='either load synthetic or real data')

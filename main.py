@@ -131,7 +131,7 @@ def glasso_R(data):
 
     bayesian_network = STAP(string, "bayesian_network")
     glasso_cov = bayesian_network.glasso_r(data)
-    print('glasso_cov', glasso_cov)
+
     return glasso_cov
 
 def empirical_est(data):
@@ -146,10 +146,12 @@ def empirical_est(data):
         cov_est : Estimated empirical covariance matrix from testing data
     '''
     #return  np.cov(data.T) #(np.matmul(data.T, data)/p.s)
-    print('np cov is ', np.cov(data.T))
+
     empir_cov_np = np.cov(data.T, bias=True)
-    empir_cov = np.matmul(data.T, data)/p.s
-    print('empir_cov is ', empir_cov)
+
+    b = data - np.mean(data, axis=0)
+    empir_cov = np.matmul(np.transpose(b), b)/data.shape[0]
+
     
     return empir_cov_np, empir_cov
 
@@ -284,6 +286,52 @@ def regression(data, A_bin):
     return A_est
 
 
+def batch_least_square(data, A_bin):
+    '''
+    Algorithm 6:
+        Recovery algorithm for general Bayesian networks via Batch Least Squre + x
+
+    Learn coefficients through linear regression
+
+    Arguments:
+        data    : Input data;
+        A_bin   : The graph structure 
+
+    Return:
+        A_est   : Graph with learned coefficients
+
+    '''
+    n = p.n
+    mb_size = p.batch
+    A_est = np.zeros((n, n))
+
+    for child in range(n):
+        parents = [list(pa) for pa in (np.nonzero(A_bin[:, child]))]
+        parents = list(itertools.chain(*parents))
+        
+        #sample_size = np.floor_divide(data.shape[0], mb_size) * mb_size
+        
+        if len(parents) > 0:
+            a_est_list = []
+            
+            for i in range(0, data.shape[0], mb_size+len(parents)):
+                
+                if i + mb_size < data.shape[0]:
+                    X = data[i:i+mb_size, parents]
+                    Y = data[i:i+mb_size, child]
+                    '''
+                    Notes: A_hat = (X^T*X)^{-1}*X^T*Y
+                    '''
+                    a_est = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), Y)
+                    a_est_list.append(a_est)
+                    
+                else: break
+            a_est_mean = np.mean(a_est_list, axis=0)
+
+            A_est[parents, child] = a_est_mean
+                
+    return A_est
+
 def least_square(data, A_bin):
     '''
     Algorithm 2:
@@ -307,18 +355,20 @@ def least_square(data, A_bin):
         parents = list(itertools.chain(*parents))
 
         if len(parents) > 0:
-            for pa in parents:
+            #for pa in parents:
 
-                X = data[:, pa]
-                Y = data[:, child]
-                '''
-                Notes: A_hat = (X^T*X)^{-1}*X^T*Y
-                '''
-                a_est = np.matmul(np.matmul(np.expand_dims((1/np.matmul(np.transpose(X), X)),
-                                                           axis=0), np.expand_dims(np.transpose(X), axis=0)), Y)
-                A_est[pa, child] = a_est
+            X = data[:, parents]
+            Y = data[:, child]
+            '''
+            Notes: A_hat = (X^T*X)^{-1}*X^T*Y
+            '''
+            #a_est = np.matmul(np.matmul(np.expand_dims((1/np.matmul(np.transpose(X), X)),
+            #                                           axis=0), np.expand_dims(np.transpose(X), axis=0)), Y)
+            a_est = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), Y)
+            A_est[parents, child] = a_est
                 
     return A_est
+
 
 
 def CauchyEst_trimmed(data, A_bin):
@@ -368,6 +418,7 @@ def CauchyEst_trimmed(data, A_bin):
 
             #A_est_median = np.median(A_est_s, axis=1)
             A_est_median = []
+            
             for i in range(A_est_s.shape[0]):
                 a_est_median = stats.trim_mean(A_est_s[i,:], 0.38)
                 A_est_median.append(a_est_median)
@@ -592,9 +643,9 @@ def DCP(train_data, test_data, A_true, A_est):
         ''' Calculate M: covariance matrix among parents'''
 
         if len(parents) == 1:
-            M = np.var(test_data[:, parents].T)
+            M = np.var(train_data[:, parents].T)
         else:
-            M = np.cov(test_data[:, parents].T)
+            M = np.cov(train_data[:, parents].T)
 
         #child_data = data[:, child]
         #parents_data = data[:, parents] for each nodeuniform variance varied from (1,2) 
@@ -639,8 +690,8 @@ def DCP(train_data, test_data, A_true, A_est):
             DMD = (delta * M * delta)/(2 * np.square(sigma_hat))
 
         else:
-            DMD = np.matmul(np.matmul(delta, M), np.transpose(
-                delta))/(2 * np.square(sigma_hat))
+            DMD = np.matmul(np.matmul(np.transpose(
+                            delta), M), delta)/(2 * np.square(sigma_hat))
             
 
         dcp = np.log(sigma_hat/sigma_y) + (np.square(sigma_y) -
@@ -764,22 +815,30 @@ def my_code_ud():
     dic_cov_idx, dic_cov_val, cov_gt = ground_truth_cov(train_data, B_DAG)    
     
     ''' Undirected graph'''
-    cov_glasso_est = glasso_R(test_data)
+    #print('GLASSO')
+    #cov_glasso_est = glasso_R(test_data)
+    print('EMP')
     cov_emp_np, cov_emp_est = empirical_est(test_data)
+    print('CLIME')
     cov_clime_est  = clime(test_data)
-    cov_tiger_est  = tiger(test_data)
+    #cov_tiger_est  = tiger(test_data)
     
-    kl_glasso = DKL_ud(cov_glasso_est, cov_gt)    
+    #kl_glasso = DKL_ud(cov_glasso_est, cov_gt)    
     kl_emp_np = DKL_ud(cov_emp_np, cov_gt)
     kl_emp = DKL_ud(cov_emp_est, cov_gt)  
     kl_clime = DKL_ud(cov_clime_est, cov_gt)
-    kl_tiger = DKL_ud(cov_tiger_est, cov_gt)
+    #kl_tiger = DKL_ud(cov_tiger_est, cov_gt)
     
     
     ''' Directed graph'''
     #A_est_reg = regression(test_data, B_DAG)
+    print('LS')
     A_est_ls  = least_square(test_data, B_DAG)
+    print('Batch LS')
+    A_est_ls_batch = batch_least_square(data, B_DAG)
+    print('CAUest')
     A_est_cau_med = CauchyEst_median(data, B_DAG)
+    print('HECAU')
     A_est_he_med = heuristic_extension_median(data, B_DAG)
     #A_est_cau_trimmed = CauchyEst_trimmed(test_data, B_DAG)
     #A_est_he_trimmed = heuristic_extension_trimmed(data, B_DAG)
@@ -789,16 +848,46 @@ def my_code_ud():
     
     #kl_reg = DCP(train_data, test_data, W_DAG, A_est_reg)
     kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls)
+    kl_ls_batch  = DCP(train_data, test_data,  W_DAG, A_est_ls)
     kl_cau_med = DCP(train_data, test_data,  W_DAG, A_est_cau_med)
     kl_he_med  = DCP(train_data, test_data,  W_DAG, A_est_he_med)
     #kl_cau_tri = DCP(train_data, test_data,  W_DAG, A_est_cau_trimmed)
     #kl_he_tri  = DCP(train_data, test_data,  W_DAG, A_est_he_trimmed)
     
-    return kl_glasso, kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med
+    #return kl_glasso, kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med
+    return kl_emp_np, kl_emp, kl_clime, kl_ls, kl_ls_batch, kl_cau_med, kl_he_med
 
-def main():
+def test():
+    KL_LS = []
+    
+    for i in range(20):
+        Input = SynDAG(p)
+        #Input.visualise()
+        W_DAG = Input.A
+        B_DAG = Input.B
+        data = Input.X 
         
+        train_data, test_data = split_data(data)   
+        
+        dic_cov_idx, dic_cov_val, cov_gt = ground_truth_cov(train_data, B_DAG)  
+        #cov_emp_np, cov_emp_est = empirical_est(test_data)
+        #kl_emp = DKL_ud(cov_emp_np, cov_gt)
+        #A_est_ls  = least_square(test_data, B_DAG)
+        
+        A_est_ls = batch_least_square(data, B_DAG)
+        kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls)
+        
+        KL_LS.append(kl_ls)
+    
+    print('KL_LS', KL_LS)
+    print('LS_mean ', np.mean(KL_LS))
+    print('LS_std ', np.std(KL_LS))
+    
+    
+def main():
+    print('node number is ', p.n)
     KL_LS  = []
+    KL_LS_BATCH = []
     KL_CAU_MED = []
     KL_HE_MED = []
     
@@ -811,54 +900,55 @@ def main():
     KL_CLIME  = []
     KL_TIGER  = []
     
-    '''    
-    for i in range(3):
-        kl_glasso, kl_emp = my_code_ud()
-        
-        KL_GLASSO.append(kl_glasso)
-        KL_EMP.append(kl_emp)
-    
-    print('KL_GLASSO = ', np.mean(KL_GLASSO))
-    print('KL_EMP = ', np.mean(KL_EMP))
-    
-    '''
+
     for i in range(1):
         print('i = ', i)
  
-        kl_glasso,  kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med = my_code_ud()
-        
-        KL_GLASSO.append(kl_glasso)
-        KL_EMP_NP.append(kl_emp_np)
+        #kl_glasso,  kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med = my_code_ud()
+        kl_emp_np, kl_emp, kl_clime, kl_ls, kl_ls_batch, kl_cau_med, kl_he_med = my_code_ud()
+        #KL_GLASSO.append(kl_glasso)
+        #KL_EMP_NP.append(kl_emp_np)
         KL_EMP.append(kl_emp)
         KL_CLIME.append(kl_clime)
-        KL_TIGER.append(kl_tiger)
-        
-        KL_LS.append(kl_ls)        
+        #KL_TIGER.append(kl_tiger)
+
+        KL_LS.append(kl_ls)      
+        KL_LS_BATCH.append(kl_ls_batch)
         KL_CAU_MED.append(kl_cau_med)
         KL_HE_MED.append(kl_he_med)
         #KL_CAU_TRI.append(kl_cau_tri)
         #KL_HE_TRI.append(kl_he_tri)
     
     
-    print('KL_GLASSO = ', np.mean(KL_GLASSO))
-    print('KL_EMP_NP = ', np.mean(KL_EMP_NP))
+    #print('KL_GLASSO = ', np.mean(KL_GLASSO))
+    #print('KL_EMP_NP = ', np.mean(KL_EMP_NP))
     print('KL_EMP = ', np.mean(KL_EMP))
     print('KL_CLIME = ', np.mean(KL_CLIME))
-    print('KL_TIGER = ', np.mean(KL_TIGER))
+    #print('KL_TIGER = ', np.mean(KL_TIGER))
 
     print('KL_LS  =', np.mean(KL_LS))
+    print('KL_LS_BATCH = ', np.mean(KL_LS_BATCH))
     print('KL_MED = ', np.mean(KL_CAU_MED))  # cauchy median
     print('KL_HE = ', np.mean(KL_HE_MED))
    
     #print('KL_CAU_TRI =', np.mean(KL_CAU_TRI))
     #print('KL_HE_TRI  =', np.mean(KL_HE_TRI))
     
+    #print('KL_GLASSO_std = ', np.std(KL_GLASSO))
+    #print('KL_EMP_NP = ', np.std(KL_EMP_NP))
+    print('KL_EMP_std = ', np.std(KL_EMP))
+    print('KL_CLIME_std = ', np.std(KL_CLIME))
+    #print('KL_TIGER_std = ', np.std(KL_TIGER))
 
+    print('KL_LS_std  =', np.std(KL_LS))
+    print('KL_LS_BATCH_std = ', np.std(KL_LS_BATCH))
+    print('KL_MED_std = ', np.std(KL_CAU_MED))  # cauchy median
+    print('KL_HE_std = ', np.std(KL_HE_MED))
 
 if __name__ == '__main__':
     
     main()
-
+    #test()
 
 
 

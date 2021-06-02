@@ -221,7 +221,8 @@ class SynDAG:
         '''
         s, r, t = p.s, p.rs, p.tn.lower()
 
-        def _SEM(X, I):
+        def _SEM(X, I, v, nodes_ill):
+            
             '''
             simulate samples from linear SEM for the i-th vertex
 
@@ -236,6 +237,13 @@ class SynDAG:
                 N = r.normal(scale=1.0, size=s)
             elif t == 'uv':
                 N = r.normal(scale=r.uniform(low=1.0, high=2.0), size=s)
+            elif t == 'ca':
+                N = np.random.standard_cauchy(size=s)
+            elif t == 'ill':
+                if v in nodes_ill:
+                    N = r.normal(scale=10**-10, size=s)
+                else:
+                    N = r.normal(scale=1.0, size=s)
             elif t == 'exp':
                 N = r.exponential(scale=1.0, size=s)
             elif t == 'gum':
@@ -248,13 +256,20 @@ class SynDAG:
             n = p.n
         elif p.load == 'real':
             n = A.shape[0]
-            
+        
+        
         X = np.zeros([s, n])
         G = nx.DiGraph(A)
-
+        
+        ''' Radomly set ill conditioned nodes'''
+        nodes = np.arange(p.n)
+        np.random.shuffle(nodes)    
+        nodes_ill = nodes[:p.ill]
+        
         for v in list(nx.topological_sort(G)):
+
             P = list(G.predecessors(v))
-            X[:, v] = _SEM(X[:, P], A[P, v])
+            X[:, v] = _SEM(X[:, P], A[P, v], v, nodes_ill)
 
         return X
 
@@ -292,8 +307,12 @@ class SynDAG:
 
 
 if __name__ == '__main__':
-    Input = SynDAG()
-
+    Input = SynDAG(p)
+    Input.visualise()
+    W_DAG = Input.A
+    B_DAG = Input.B
+    data = Input.X 
+    print(data)
 
 
 
