@@ -2,7 +2,7 @@
 
 ## Directed graph
 ## Undircted graph
-![](ud.png)
+![](Figure/ud.png)
 
 
 ## Data Folder:
