@@ -883,7 +883,7 @@ def test():
         dic_cov_idx, dic_cov_val, dic_cov_val_gt, cov_gt = ground_truth_cov(train_data, B_DAG, M)   
         #cov_emp_np, cov_emp_est = empirical_est(test_data)
         #kl_emp = DKL_ud(cov_emp_np, cov_gt)
-        A_est_ls  = least_square(test_data, B_DAG)
+        A_est_ls  = least_square(data, B_DAG)
         
         #A_est_ls = batch_least_square(data, B_DAG)
         kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls, M)
