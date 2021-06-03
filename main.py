@@ -21,21 +21,13 @@ from sklearn.exceptions import ConvergenceWarning
 import config
 
 from data import SynDAG
+from evl import DKL_ud, eval_un, DCP
 
 p = config.setup()
-#lgr = p.logger
+lgr = p.logger
 
 
 
-"""
-TODO: (Baseline Algorithm) For the experiments, we need to compare to 
-(I)  The empirical estimator (like in Appendix C of https://arxiv.org/pdf/1710.05209.pdf);
-(II) Glasso/clime (algorithms for undirected graphical models). 
-(III) Compare to the algorithm that solves least squares at each node.
-      This is the max likelihood estimator for gaussian.
-Notes: This algorithm will use the structure of the Bayes net, 
-       and I expect it will need similar number of samples as our algorithm
-"""
 def clime(data):
     '''
     learn cov_est use CLIME algorithm.
@@ -175,44 +167,6 @@ def glasso(data):
     
     return cov_est
 
-def DKL_ud(cov_est, cov_gt):
-    '''
-    Calculate KL-distance for undirected graph (different from DCP<directed graph>)
-        Link: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Multivariate_normal_distributions
-    
-    Arguments:
-        cov_est : estimated covariance matrix from (1) empirical estimator; (2) GLASSO;
-        
-        cov_gt  : ground truth covariance matrix;
-        
-    Return:
-        DKL_ud  : KL-distance for undirected graph
-    '''
-
-    dkl = 1/2*(np.trace(np.matmul(np.linalg.inv(cov_est), cov_gt)) - cov_gt.shape[0]\
-        + np.log((np.linalg.det(cov_est)/(np.linalg.det(cov_gt)))))
-
-    return dkl
-    
-
-def eval_un(train_data, test_data, A_bin):
-    '''
-    Evaluate the KL disctance between undirected graph using the D_KL equation 
-     for multivarite normal distribution:
-
-    Arguments:
-        data    : Input data;
-    
-    Return:   
-        cov_est : Graph with learned coefficients   
-    '''
-    _, _, cov_gt = ground_truth_cov(train_data, A_bin)
-    cov_est = glasso(test_data, tol=0.01, max_iter=1000, normalize=True)
-    
-    dkl = DKL_ud(cov_est, cov_gt)
-    return dkl   
-    
-    
 
 def sigma_estimator(data, A_est):
     '''
@@ -232,17 +186,16 @@ def sigma_estimator(data, A_est):
         ''' Calculate sigma_y (true)'''
 
         if len(a_est) == 0:
-            sigma_hat = np.var(data[:, child])
+            sigma_hat = np.sqrt(np.var(data[:, child]))
 
         elif len(a_est) == 1:
-            sigma_hat = np.var(data[:, child] - a_est *
-                               np.transpose(data[:, parents]))
+            sigma_hat = np.sqrt(np.var(data[:, child] - a_est *
+                               np.transpose(data[:, parents])))
 
         elif len(a_est) > 1:
-            sigma_hat = np.var(
-                data[:, child] - np.matmul(np.array(a_est), np.transpose(data[:, parents])))
+            sigma_hat = np.sqrt(np.var(
+                data[:, child] - np.matmul(np.array(a_est), np.transpose(data[:, parents]))))
         
-        #print('sigma_hat', sigma_hat)
         Sigma_hat[child] = sigma_hat
     
     return Sigma_hat
@@ -309,16 +262,14 @@ def batch_least_square(data, A_bin):
         parents = [list(pa) for pa in (np.nonzero(A_bin[:, child]))]
         parents = list(itertools.chain(*parents))
         
-        #sample_size = np.floor_divide(data.shape[0], mb_size) * mb_size
-        
         if len(parents) > 0:
             a_est_list = []
             
             for i in range(0, data.shape[0], mb_size+len(parents)):
                 
-                if i + mb_size < data.shape[0]:
-                    X = data[i:i+mb_size, parents]
-                    Y = data[i:i+mb_size, child]
+                if i + mb_size+len(parents) < data.shape[0]:
+                    X = data[i:i+mb_size+len(parents), parents]
+                    Y = data[i:i+mb_size+len(parents), child]
                     '''
                     Notes: A_hat = (X^T*X)^{-1}*X^T*Y
                     '''
@@ -585,7 +536,9 @@ def heuristic_extension_median(data, A_bin):
      
             
             ''' Compute Cholesky decomposition M_hat = L_hat * L_hat^T'''
-            L = scipy.linalg.cholesky(M, lower=True)       
+            
+            L = scipy.linalg.cholesky(M, lower=True)    
+            
             '''
             p: number of parents, 1 <= p <= d
             '''
@@ -616,110 +569,7 @@ def heuristic_extension_median(data, A_bin):
                     
     return A_est
 
-"""
-Performance evaluation:
-    KL-Distance VS sample size
-"""
-    
-def DCP(train_data, test_data, A_true, A_est, M_gt):
-    '''
-    Performance evaluation (D_cp distance over all samples)
 
-    Arguments:
-        data    : Input data;
-                {train_data, test_data}
-        A_true  : hidden true parameters A_true = (A, sigma_y);
-        A_est   : our estimates          A_est  = (A, sigma_hat);
-
-    Returns:
-        DKL = sum(DCP) KL divergence. 
-    '''
-    n = p.n
-    DCP1 = np.array([])
-    DCP2 = np.array([])
-    
-    for child in range(n):
-        parents = [list(pa) for pa in (np.nonzero(A_true[:, child]))]
-        parents = list(itertools.chain(*parents))
-
-        ''' Calculate M: covariance matrix among parents'''
-
-        if len(parents) == 1:
-            M = np.var(train_data[:, parents].T)
-        else:
-            M = np.cov(train_data[:, parents].T)
-            
-        M2 = M_gt[np.ix_(parents, parents)]
-        #child_data = data[:, child]
-        #parents_data = data[:, parents] for each nodeuniform variance varied from (1,2) 
-
-        ''' Calculate a_true and a_est'''
-
-        index_true = A_true[:, child]
-        index_est = A_est[:, child]
-        
-        a_true = index_true[index_true != 0]
-        a_est = index_est[index_est != 0]
-        print('child is ', child, ' parents is ', parents, 'a_hat is', a_est)
-
-        ''' delta = [a_true - a_est]'''
-
-        delta = a_true - a_est
-
-        ''' Calculate sigma_y (true)'''
-
-        if len(a_est) == 0:
-            sigma_hat = np.var(test_data[:, child])
-            
-            sigma_y = np.var(train_data[:, child])
-
-        elif len(a_est) == 1:
-            sigma_hat = np.var(test_data[:, child] - a_est *
-                               np.transpose(test_data[:, parents]))
-            
-            sigma_y = np.var(train_data[:, child] - a_true *
-                             np.transpose(train_data[:, parents]))
-
-        elif len(a_est) > 1:
-            sigma_hat = np.var(
-                test_data[:, child] - np.matmul(np.array(a_est), np.transpose(test_data[:, parents])))
-            
-            sigma_y = np.var(
-                train_data[:, child] - np.matmul(np.array(a_true), np.transpose(train_data[:, parents])))
-        
-        print('sigma_hat = ', sigma_hat)
-
-        ''' DCP can be calculated as follows: '''
-        #print('sigma_hat ', sigma_hat)
-        
-        if len(delta) == 1:
-            DMD = (delta * M * delta)/(2 * np.square(sigma_hat))
-
-        else:
-            DMD = np.matmul(np.matmul(np.transpose(
-                            delta), M), delta)/(2 * np.square(sigma_hat))
-        dcp1 = np.log(sigma_hat/sigma_y) + (np.square(sigma_y) -
-                                           np.square(sigma_hat))/(2*np.square(sigma_hat)) + DMD
-        
-        if len(delta) == 1:
-            DMD2 = (delta * M2 * delta)/(2 * np.square(sigma_hat))
-
-        else:
-            DMD2 = np.matmul(np.matmul(np.transpose(
-                            delta), M), delta)/(2 * np.square(sigma_hat))       
-            
-        dcp2 = np.log(sigma_hat/sigma_y) + (np.square(sigma_y) -
-                                           np.square(sigma_hat))/(2*np.square(sigma_hat)) + DMD2
-
-
-        DCP1 = np.append(DCP1, dcp1)
-        DCP2 = np.append(DCP2, dcp2)
-    KL1 = np.sum(DCP1)
-    KL2 = np.sum(DCP2)
-    print('KL1', KL1)
-    print('KL2', KL2)
-
-    return KL2#np.sum(DCP1)
 
 
 def split_data(data):
@@ -733,7 +583,8 @@ def split_data(data):
         test_data : testing data
     
     '''
-    train_prop, test_prop = p.train, p.test 
+    train_prop = p.train
+    
     train_index = int(train_prop * data.shape[0])
     
     train_data = data[0:train_index, :]
@@ -806,28 +657,26 @@ def my_code_ud():
     A = np.linalg.inv(I - W_DAG)
     B = np.transpose(np.linalg.inv(I - W_DAG))
     M = np.matmul(np.matmul(A, Z), B)
-    print('M is ', M)
-    
+
     train_data, test_data = split_data(data)   
     
     dic_cov_idx, dic_cov_val, dic_cov_val_gt, cov_gt = ground_truth_cov(train_data, B_DAG, M)    
-    print('dic_cov_emp', dic_cov_val)
-    print('dic_cov_gt ', dic_cov_val_gt)
+
     
-    """
+
     ''' Undirected graph'''
     #print('GLASSO')
     #cov_glasso_est = glasso_R(test_data)
     print('EMP')
     cov_emp_np, cov_emp_est = empirical_est(test_data)
-    print('CLIME')
-    cov_clime_est  = clime(test_data)
+    #print('CLIME')
+    #cov_clime_est  = clime(test_data)
     #cov_tiger_est  = tiger(test_data)
     
     #kl_glasso = DKL_ud(cov_glasso_est, cov_gt)    
-    kl_emp_np = DKL_ud(cov_emp_np, cov_gt)
-    kl_emp = DKL_ud(cov_emp_est, cov_gt)  
-    kl_clime = DKL_ud(cov_clime_est, cov_gt)
+    #kl_emp_np = DKL_ud(cov_emp_np, cov_gt)
+    #kl_emp = DKL_ud(cov_emp_est, cov_gt)  
+    #kl_clime = DKL_ud(cov_clime_est, cov_gt)
     #kl_tiger = DKL_ud(cov_tiger_est, cov_gt)
     
     
@@ -848,21 +697,22 @@ def my_code_ud():
     #sigma_reg = sigma_estimator(data, A_est_ls)
     
     #kl_reg = DCP(train_data, test_data, W_DAG, A_est_reg)
-    kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls)
-    kl_ls_batch  = DCP(train_data, test_data,  W_DAG, A_est_ls)
-    kl_cau_med = DCP(train_data, test_data,  W_DAG, A_est_cau_med)
-    kl_he_med  = DCP(train_data, test_data,  W_DAG, A_est_he_med)
+    kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls, M, Z) 
+    kl_ls_batch  = DCP(train_data, test_data,  W_DAG, A_est_ls, M, Z)
+    kl_cau_med = DCP(train_data, test_data,  W_DAG, A_est_cau_med, M, Z)
+    kl_he_med  = DCP(train_data, test_data,  W_DAG, A_est_he_med, M, Z)
     #kl_cau_tri = DCP(train_data, test_data,  W_DAG, A_est_cau_trimmed)
     #kl_he_tri  = DCP(train_data, test_data,  W_DAG, A_est_he_trimmed)
     
     #return kl_glasso, kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med
-    return kl_emp_np, kl_emp, kl_clime, kl_ls, kl_ls_batch, kl_cau_med, kl_he_med
-"""
+    return  kl_ls, kl_ls_batch, kl_cau_med, kl_he_med
+
 
 def test():
     KL_LS = []
+    KL_HE_MED = []
     
-    for i in range(1):
+    for i in range(10):
         Input = SynDAG(p)
         Input.visualise()
         W_DAG = Input.A
@@ -876,23 +726,31 @@ def test():
         B = np.linalg.inv(np.transpose(I - W_DAG))
         ''' '''        
         M = np.matmul(np.matmul(A, Z), B)
-        print('M is ', M)
+
         
         train_data, test_data = split_data(data)   
         
         dic_cov_idx, dic_cov_val, dic_cov_val_gt, cov_gt = ground_truth_cov(train_data, B_DAG, M)   
         #cov_emp_np, cov_emp_est = empirical_est(test_data)
         #kl_emp = DKL_ud(cov_emp_np, cov_gt)
-        A_est_ls  = least_square(data, B_DAG)
+        #A_est_ls  = least_square(data, B_DAG)
+        A_est_he_med = heuristic_extension_median(data, B_DAG)
         
         #A_est_ls = batch_least_square(data, B_DAG)
-        kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls, M)
+        #kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls, M, Z)
         
-        KL_LS.append(kl_ls)
+        kl_he_med  = DCP(train_data, test_data,  W_DAG, A_est_he_med, M, Z)
+        
+        #KL_LS.append(kl_ls)
+        KL_HE_MED.append(kl_he_med)
     
-    print('KL_LS', KL_LS)
-    print('LS_mean ', np.mean(KL_LS))
-    print('LS_std ', np.std(KL_LS))
+    #print('KL_LS', KL_LS)
+    #print('LS_mean ', np.mean(KL_LS))
+    #print('LS_std ', np.std(KL_LS))
+
+    print('KL_HE_MED', KL_HE_MED)
+    print('KL_HE_mean ', np.mean(KL_HE_MED))
+    print('KL_HE_std ', np.std(KL_HE_MED))
     
     
 def main():
@@ -912,15 +770,16 @@ def main():
     KL_TIGER  = []
     
 
-    for i in range(1):
+    for i in range(6):
         print('i = ', i)
  
         #kl_glasso,  kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med = my_code_ud()
-        kl_emp_np, kl_emp, kl_clime, kl_ls, kl_ls_batch, kl_cau_med, kl_he_med = my_code_ud()
+        #kl_emp_np, kl_emp, kl_clime, kl_ls, kl_ls_batch, kl_cau_med, kl_he_med = my_code_ud()
+        kl_ls, kl_ls_batch, kl_cau_med, kl_he_med = my_code_ud()
         #KL_GLASSO.append(kl_glasso)
         #KL_EMP_NP.append(kl_emp_np)
-        KL_EMP.append(kl_emp)
-        KL_CLIME.append(kl_clime)
+        #KL_EMP.append(kl_emp)
+        #KL_CLIME.append(kl_clime)
         #KL_TIGER.append(kl_tiger)
 
         KL_LS.append(kl_ls)      
@@ -933,8 +792,8 @@ def main():
     
     #print('KL_GLASSO = ', np.mean(KL_GLASSO))
     #print('KL_EMP_NP = ', np.mean(KL_EMP_NP))
-    print('KL_EMP = ', np.mean(KL_EMP))
-    print('KL_CLIME = ', np.mean(KL_CLIME))
+    #print('KL_EMP = ', np.mean(KL_EMP))
+    #print('KL_CLIME = ', np.mean(KL_CLIME))
     #print('KL_TIGER = ', np.mean(KL_TIGER))
 
     print('KL_LS  =', np.mean(KL_LS))
@@ -947,8 +806,8 @@ def main():
     
     #print('KL_GLASSO_std = ', np.std(KL_GLASSO))
     #print('KL_EMP_NP = ', np.std(KL_EMP_NP))
-    print('KL_EMP_std = ', np.std(KL_EMP))
-    print('KL_CLIME_std = ', np.std(KL_CLIME))
+    #print('KL_EMP_std = ', np.std(KL_EMP))
+    #print('KL_CLIME_std = ', np.std(KL_CLIME))
     #print('KL_TIGER_std = ', np.std(KL_TIGER))
 
     print('KL_LS_std  =', np.std(KL_LS))

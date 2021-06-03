@@ -234,7 +234,7 @@ class SynDAG:
                 numpy.ndarray: (s, 1) data matrix.
             '''
             if t == 'ev':
-                sigma = 1.0
+                sigma = 10.0
                 N = r.normal(scale=sigma, size=s)
             elif t == 'uv':
                 sigma = r.uniform(low=1.0, high=2.0)
@@ -245,12 +245,11 @@ class SynDAG:
                 N = np.random.standard_cauchy(size=s)
             elif t == 'ill':    
                 if v in nodes_ill:
-                    print('v', v)
                     sigma = 10**-10
-                    N = r.normal(scale=10**-10, size=s)
+                    N = r.normal(scale=sigma, size=s)
                 else:
-                    sigma = 1
-                    N = r.normal(scale=1.0, size=s)
+                    sigma = 2
+                    N = r.normal(scale=sigma, size=s)
             elif t == 'exp':
                 sigma = 1.0
                 N = r.exponential(scale=1.0, size=s)
@@ -275,14 +274,14 @@ class SynDAG:
         np.random.shuffle(nodes)    
         nodes_ill = nodes[:p.ill]
         
-        Sigma = []
+        Sigma = {}
         
         for v in list(nx.topological_sort(G)):
             P = list(G.predecessors(v))
             X[:, v], sigma = _SEM(X[:, P], A[P, v], v, nodes_ill)
-            Sigma.append(sigma)
-
-        Z = np.diag(Sigma)
+            Sigma[v] = sigma
+        sorted_sigma = np.array(sorted(Sigma.items()))[:, 1]
+        Z = np.diag(sorted_sigma)
         
         return X, Z
 

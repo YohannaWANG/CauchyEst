@@ -12,12 +12,12 @@ n: number of nodes
 s: number of samples
 d: average degree of node
 '''
-n = 3
-s = 2000
-d = 2
-ill = 1
+n = 5
+s = 300
+d = 5
+ill = 3
 
-batch = 30
+batch = 200
 
 '''
 data arguments
