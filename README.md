@@ -50,7 +50,7 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 
 ## Algorithms
 
-<img width="700" alt="characterization" src="/docs/images/algo1.png"/ >    
+<img width="700" alt="characterization" src="/docs/images/algo1.png" >    
 
 
 ## Performance
