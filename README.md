@@ -15,7 +15,10 @@ We analyze the commonly used node-wise least squares regression **{LeastSquares}
 We also propose a new estimator **{CauchyEst}** based on some interesting properties of Cauchy random variables, and prove near-optimal sample complexity for polytrees.
 Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGeneral}** compare favorably to **{LeastSquares}**.                               
 
-                                                            
+## Example
+
+<img align="left" src="docs/images/example"> &nbsp;
+
 ## Prerequisites
 
 - **Python 3.6+**
