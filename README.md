@@ -53,6 +53,10 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 ## Runing as a command
 
 ## Algorithms
+- ![#f03c15](https://via.placeholder.com/15/f03c15/000000?text=+)**Algorithm 1** states our two-phased recovery approach. We estimate the coefficients of the Bayesian network in the first phase and use them to recover the variances in the second phase.
+- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `#c5f015`
+- ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `#1589F0`
+- 
 - **Algorithm 1** states our two-phased recovery approach. We estimate the coefficients of the Bayesian network in the first phase and use them to recover the variances in the second phase.
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo1.png" >    
 - **Algorithm 2** is recovering the coefficients in a Bayesian network using a linear least squares estimator. 
