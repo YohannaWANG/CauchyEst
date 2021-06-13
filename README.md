@@ -79,6 +79,12 @@ $ python main.py --regress_method mgcv --n 50 --s 1000 --d 4
 
 ## Performance
 
+100 nodes, degree 5, ER graph     | Effect of changing batch size, 100 nodes, Random Tree graph
+:--------------------------------------------------------------------:|:-----------------------------------------------------------------------------------:
+<img width="400" alt="characterization" src="/docs/images/100_node_syn_uv_d5_ER.png" >  |  <img width="400" alt="characterization" src="/docs/images/Batch_LS_100node_randomTree.png" >
+
+
+
 ## Open questions
 -The most prominent question raised by our work is whether we can rigorously explain the superior performance of **{CauchyEst}* and **{CauchyEstGeneral}** in the experiments. 
 - One can view **{LeastSquares}** as a special case of **{CauchyEst}** by using only a **{single}** batch (with >>p samples) and enforcing Algorithm 3 to use the least squares solution. It would be interesting to see if one can design an algorithm that interpolates between **{LeastSquares}** and **{CauchyEst}** while exhibiting a tradeoff between `number of batches` and `sample complexity`. Some preliminary experiments on this trade-off are provided in the supplementary material.
