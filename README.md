@@ -49,8 +49,21 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 
 ## Running a simple demo
 
+The simplest way to try out DCOV is to run a simple example:
+```bash
+$ git clone https://github.com/YohannaWANG/CauchyEst.git
+$ cd CauchyEst/
+$ python CauchyEst/demo.py
+```
 
 ## Runing as a command
+
+Alternatively, if you have a CSV data file `X.csv`, you can install the package and run the algorithm as a command:
+```bash
+$ pip install git+git://github.com/YohannaWANG/CauchyEst
+$ cd CauchyEst
+$ python main.py --regress_method mgcv --n 50 --s 1000 --d 4 
+```
 
 ## Algorithms
 - ![#f03c15](https://via.placeholder.com/15/f03c15/000000?text=+)  **Algorithm 1** states our two-phased recovery approach. We estimate the coefficients of the Bayesian network in the first phase and use them to recover the variances in the second phase.
