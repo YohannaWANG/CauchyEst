@@ -54,12 +54,15 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 
 ## Algorithms
 - **Algorithm 1** states our two-phased recovery approach. We estimate the coefficients of the Bayesian network in the first phase and use them to recover the variances in the second phase.
-   <img width="750" align ="center" alt="characterization" src="/docs/images/algo1.png" >   
+   <img width="800" align ="center" alt="characterization" src="/docs/images/algo1.png" >    
 - **Algorithm 2** is recovering the coefficients in a Bayesian network using a linear least squares estimator. 
-   <img width="750" align ="center" alt="characterization" src="/docs/images/algo2.png"/ >    
-<img width="750" alt="characterization" src="/docs/images/algo3.png"/ >    
-<img width="750" alt="characterization" src="/docs/images/algo4.png"/ >    
-<img width="750" alt="characterization" src="/docs/images/algo5.png"/ >    
+   <img width="800" align ="center" alt="characterization" src="/docs/images/algo2.png">    
+- **Algorithm 3** is our CauchyEst algorithm for variable with p parents.
+   <img width="800" align ="center" alt="characterization" src="/docs/images/algo3.png" >  
+- **Algorithm 4** is our CauchyEst algorithm for recovering the coefficients in polytree Bayesian networks.
+   <img width="800" align ="center" alt="characterization" src="/docs/images/algo4.png" >    
+- **Algorithm 5** extend CauchyEst algorithm to general Bayesian networks.
+   <img width="800" align ="center" alt="characterization" src="/docs/images/algo5.png" >    
 
 ## Performance
 
