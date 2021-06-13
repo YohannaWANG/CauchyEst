@@ -39,8 +39,8 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 
 ## Contents
 
-- Data  - Real Bayesian network data from bnlearn;
-- `data.py` - generate synthetic chain graph data, including graph simulation and data simulation. Load real Bnlearn data 
+- **Data**  - Real Bayesian network data from bnlearn;
+- `data.py` - synthetic chain graph data, including graph simulation and data simulation. Load real Bnlearn data 
 - `evaluate.py` - algorithm accuracy evaluation 
 - `config.py` - Set parameters for Bayesian network (eg. node number, graph degree, sample size)
 - `utils.py` - simulation parameters, such as selecte graph type, node number, data type, graph degree, etc.  
