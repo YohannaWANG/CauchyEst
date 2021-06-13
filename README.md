@@ -46,6 +46,10 @@ For a known chain component decomposition, we show that the DAG on the chain com
 
 ## Algorithms
 <img alt="characterization" src="/docs/images/algo1.png"/>    
+<img alt="characterization" src="/docs/images/algo2.png"/>    
+<img alt="characterization" src="/docs/images/algo3.png"/>    
+<img alt="characterization" src="/docs/images/algo4.png"/>    
+<img alt="characterization" src="/docs/images/algo5.png"/>    
 
 ## Performance
 
