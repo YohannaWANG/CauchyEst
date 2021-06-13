@@ -16,8 +16,7 @@ We also propose a new estimator **{CauchyEst}** based on some interesting proper
 Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGeneral}** compare favorably to **{LeastSquares}**.                               
 
 ## Example
-
-<img width="820" align="left" src="docs/images/example.png"> 
+<img width="820" align="center" src="docs/images/example.png"> 
 
 
 
