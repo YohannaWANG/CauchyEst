@@ -49,7 +49,6 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 ## Runing as a command
 
 ## Algorithms
-
 <img width="700" alt="characterization" src="/docs/images/algo1.png"/ >    
 <img width="700" alt="characterization" src="/docs/images/algo2.png"/ >    
 <img width="750" alt="characterization" src="/docs/images/algo3.png"/ >    
