@@ -17,7 +17,7 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 
 ## Example
 
-<img align="left" src="docs/images/example"> &nbsp;
+<img align="left" src="docs/images/example.png"> &nbsp;
 
 ## Prerequisites
 
