@@ -3,7 +3,7 @@
 
    
 
-# Learning Sparse Fixed-Structure Gaussian BayesianNetworks
+# Learning Sparse Fixed-Structure Gaussian Bayesian Networks
 
 
 
@@ -45,7 +45,7 @@ For a known chain component decomposition, we show that the DAG on the chain com
 ## Runing as a command
 
 ## Algorithms
-<img width="460" alt="characterization" src="/docs/images/algo1.png"/>    
+<img alt="characterization" src="/docs/images/algo1.png"/>    
 
 ## Performance
 
