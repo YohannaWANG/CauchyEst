@@ -50,11 +50,11 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 
 ## Algorithms
 
-<img align="right" width="750" alt="characterization" src="/docs/images/algo1.png"/ >    
-<img width="750" alt="characterization" src="/docs/images/algo2.png"/  align="center">    
-<img width="750" alt="characterization" src="/docs/images/algo3.png"/  class="center">    
-<img width="750" alt="characterization" src="/docs/images/algo4.png"/  class="center">    
-<img width="750" alt="characterization" src="/docs/images/algo5.png"/  class="center">    
+<img width="750" alt="characterization" src="/docs/images/algo1.png"/ >    
+<img width="750" alt="characterization" src="/docs/images/algo2.png"/ >    
+<img width="750" alt="characterization" src="/docs/images/algo3.png"/ >    
+<img width="750" alt="characterization" src="/docs/images/algo4.png"/ >    
+<img width="750" alt="characterization" src="/docs/images/algo5.png"/ >    
 
 ## Performance
 
