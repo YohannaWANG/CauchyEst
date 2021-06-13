@@ -17,23 +17,24 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 
                                                             
 ## Prerequisites
-- Python 3.6+
-- `networkx`
-- `argpase`
-- `itertools`
-- `numpy`
-- `scipy`
-- `sklearn`
-- `matplotlib`
-- `torch`: Optional, only used for nonlinear model.
 
-- R 4.0.0
-- `rpy2`: Python interface, enables calling R from Python. Install [rpy2](https://pypi.org/project/rpy2/) first.
-- `bnlearn` : [Bayesian network learning and inference](bnlearn.com) 
-- `glasso` : [Graphical Lasso: Estimation of Gaussian Graphical Models](https://cran.r-project.org/web/packages/glasso/index.html)
-- `flare`: [Family of Lasso Regression](https://cran.r-project.org/web/packages/flare/index.html)
+- **Python 3.6+**
+   - `networkx`
+   - `argpase`
+   - `itertools`
+   - `numpy`
+   - `scipy`
+   - `sklearn`
+   - `matplotlib`
+   - `torch`: Optional.
+- **R 4.0.0**
+   - `rpy2`: Python interface, enables calling R from Python. Install [rpy2](https://pypi.org/project/rpy2/) first.
+   - `bnlearn` : [Bayesian network learning and inference](bnlearn.com) 
+   - `glasso` : [Graphical Lasso: Estimation of Gaussian Graphical Models](https://cran.r-project.org/web/packages/glasso/index.html)
+   - `flare`: [Family of Lasso Regression](https://cran.r-project.org/web/packages/flare/index.html)
 
 ## Contents
+
 - Data  - Real Bayesian network data from bnlearn;
 - `data.py` - generate synthetic chain graph data, including graph simulation and data simulation. Load real Bnlearn data 
 - `evaluate.py` - algorithm accuracy evaluation 
@@ -48,7 +49,8 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 ## Runing as a command
 
 ## Algorithms
-<img alt="characterization" src="/docs/images/algo1.png"/>    
+
+<img width="700" alt="characterization" src="/docs/images/algo1.png"/>    
 <img alt="characterization" src="/docs/images/algo2.png"/>    
 <img alt="characterization" src="/docs/images/algo3.png"/>    
 <img alt="characterization" src="/docs/images/algo4.png"/>    
