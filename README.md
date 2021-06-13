@@ -8,9 +8,12 @@
 
 
 ## Introduction
-We study **identifiability** of **Andersson-Madigan-Perlman (AMP)** chain graph models, which are a common generalization of linear structural equation models and Gaussian graphical models. <u>AMP models are described by DAGs on chain components which themselves are undirected graphs.</u> 
+Gaussian Bayesian networks (a.k.a.\ linear Gaussian structural equation models) are widely used to model causal interactions among continuous variables.
+In this work, we study the problem of **learning a fixed-structure Gaussian Bayesian network up to a bounded error in total variation distance.** 
 
-For a known chain component decomposition, we show that the DAG on the chain components is identifiable if the determinants of the residual covariance matrices of the chain components are monotone non-decreasing in topological order. This condition extends the equal variance identifiability criterion for Bayes nets, and it can be generalized from determinants to any super-additive function on positive semidefinite matrices. When the component decomposition is  unknown, we describe conditions that allow recovery of the full structure using a polynomial time algorithm based on submodular function minimization. We also conduct experiments comparing our algorithm's performance against existing baselines.                                       
+We analyze the commonly used node-wise least squares regression **{LeastSquares}** and prove that it has the near-optimal sample complexity.
+We also propose a new estimator **{CauchyEst}** based on some interesting properties of Cauchy random variables, and prove near-optimal sample complexity for polytrees.
+Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGeneral}** compare favorably to **{LeastSquares}**.                               
 
                                                             
 ## Prerequisites
