@@ -100,7 +100,8 @@ $ python main.py --regress_method mgcv --n 50 --s 1000 --d 4
 
 
 ## Open questions
--The most prominent question raised by our work is whether we can rigorously explain the superior performance of **{CauchyEst}* and **{CauchyEstGeneral}** in the experiments. 
+
+- The most prominent question raised by our work is whether we can rigorously explain the superior performance of **{CauchyEst}* and **{CauchyEstGeneral}** in the experiments. 
 - One can view **{LeastSquares}** as a special case of **{CauchyEst}** by using only a **{single}** batch (with >>p samples) and enforcing Algorithm 3 to use the least squares solution. It would be interesting to see if one can design an algorithm that interpolates between **{LeastSquares}** and **{CauchyEst}** while exhibiting a tradeoff between `number of batches` and `sample complexity`. Some preliminary experiments on this trade-off are provided in the supplementary material.
 - The current work only analyzes the sample complexity in the case that the distributions are realizable by the given structure. It remains an open question to guarantee bounds on the error in the non-realizable setting, i.e., to find the distribution that is best fitted by the given structure. 
 
