@@ -157,6 +157,7 @@ Please do not hestitate to contact us!
 - (TODO) Two figures for each case, one with 1 ill-conditioned node, one with 5 ill-conditioned node;
 - (TODO) Agnoistic 
 - (TODO) Average batch median algorithm & experiment.
+- (TODO) bnlearn 104 node dataset-  experiments.
 ```
 
 
