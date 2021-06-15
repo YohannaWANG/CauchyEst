@@ -46,6 +46,18 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 - `utils.py` - simulation parameters, such as selecte graph type, node number, data type, graph degree, etc.  
 - `utils.R` - load bnlearn graph; Run CLIME algorithm
 
+## Parameters
+
+| Parameter    | Type | Description        | Options            |
+| -------------|------| -------------      | -------------      |
+| `n`          |  int |  number of nodes   |      -             |
+| `s`          |  int |  number of samples |      -             |
+| `d`          |  int |  average degree of node |  -            |
+| `load`       |  str |  load synthetic or real data |   'syn', 'real' |
+| `choice`     |  str |  choice which real data      |options: 'ecoli70', 'magic-niab', 'magic-irri', 'arth150'|
+| `tg`         |  str |  type of a graph   |  'chain', 'er', 'sf', 'rt' |
+| `tn`         |  str |  type of noise     |  'ev', 'uv', 'ca', 'ill', 'exp', 'gum' |
+
 
 ## Running a simple demo
 
