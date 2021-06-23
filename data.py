@@ -14,6 +14,14 @@ import config
 p = config.setup()
 lgr = p.logger
 
+import random
+
+seed = 123
+random.seed(seed)
+np.random.seed(seed)
+
+
+
 """
 Function: (Data) Generate synthetic DAG data (linear)
 """
@@ -51,10 +59,11 @@ class SynDAG:
         Returns:
             B: (n, n) numpy.ndarray binary adjacency of ER DAG
         '''
-        n, d, s = p.n, p.d, p.rs
+        n, d = p.n, p.d
         p = float(d)/(n-1)
 
-        G = nx.generators.erdos_renyi_graph(n=n, p=p, seed=None)
+        G = nx.generators.erdos_renyi_graph(n=n, p=p, seed=5)
+
         U = nx.to_numpy_matrix(G)
         B = np.tril(U, k=-1)
 
@@ -74,10 +83,23 @@ class SynDAG:
             p.rs: numpy.random.RandomState
         '''
         n, s = p.n, p.s
-        G = nx.random_tree(n, seed=s)
+        G = nx.random_tree(n, seed=5)
         U = nx.to_numpy_matrix(G)
-        B = np.tril(U, k=-1)
 
+        B = np.tril(U, k=-1)
+        '''
+        A = np.zeros((n,n))
+        root = np.random.randint(n)
+        for i in range(n):
+            for j in range(n):
+                #i,j not edge, continue
+                if U[i,j] == 0:
+                    continue;
+                elif j in nx.shortest_path(G,root,i):
+                    A[j,i]=1
+                elif i in nx.shortest_path(G,root,j):
+                    A[i,j]=1
+        '''
         return B
 
     @staticmethod
@@ -234,7 +256,7 @@ class SynDAG:
                 numpy.ndarray: (s, 1) data matrix.
             '''
             if t == 'ev':
-                sigma = 10.0
+                sigma = 1.0
                 N = r.normal(scale=sigma, size=s)
             elif t == 'uv':
                 sigma = r.uniform(low=1.0, high=2.0)
@@ -245,7 +267,7 @@ class SynDAG:
                 N = np.random.standard_cauchy(size=s)
             elif t == 'ill':    
                 if v in nodes_ill:
-                    sigma = 10**-10
+                    sigma = 10**-8
                     N = r.normal(scale=sigma, size=s)
                 else:
                     sigma = 2
@@ -315,23 +337,76 @@ class SynDAG:
             G, pos, edge_labels=_edges(G, 'weight'), font_size=6)
         if log:
             plt.savefig(os.path.join(self.p.dir, name+'.png'), dpi=1000)
-            
-
-
-if __name__ == '__main__':
-    Input = SynDAG(p)
-    Input.visualise()
-    W_DAG = Input.A
-    B_DAG = Input.B
-    data = Input.X 
+    
+def get_M(Input):
+    '''
+    Get the ground truth M and Z
+    
+    '''
+    
     Z = Input.Z
     I = np.identity(p.n)
     A = np.linalg.inv(I - W_DAG)
     B = np.transpose(np.linalg.inv(I - W_DAG))
-    M = np.matmul(np.matmul(A, Z), B)
-    print('M = ', M)
-    #print(data)
-    print(Z)
+    M = np.matmul(np.matmul(A, Z), B)  
+    
+    return Z, M
+
+def prune_graph(B_DAG):
+    
+    '''
+    Prune a degree p.d graph into degree = p.degree_limit graph
+    Arguments:
+        B_DAG: Binary adjacency matrix
+        
+    '''
+    B_DAG_prune = B_DAG.copy()
+    
+    
+    for child in range(p.n):
+        in_degree = np.sum(B_DAG[:, child])
+        
+        if in_degree >= p.d_limit:
+
+            num_to_prune = int(in_degree - p.d_limit)
+            a = np.squeeze(np.asarray(np.nonzero( B_DAG_prune[:, child])), axis=0)
+            idx_to_zero = np.random.choice(a, size=num_to_prune)
+
+            B_DAG_prune[idx_to_zero, child] = 0
+
+    return B_DAG_prune 
+            
+def in_out__degree(B_DAG): 
+    
+    G = nx.from_numpy_matrix(B_DAG)   
+    degree_all = [val for (node, val) in G.degree()]
+    
+    nodes = [n for n , i in enumerate(degree_all) if i >= 0]
+    degree = list(filter((0).__le__, degree_all))    
+
+
+
+if __name__ == '__main__':
+
+    for i in range(1):
+        p.s = 100
+        Input = SynDAG(p)
+        Input.visualise()
+        plt.show()
+
+        W_DAG = Input.A
+        B_DAG = Input.B
+        data = Input.X 
+        
+        Z,  M = get_M(Input)
+        #B_DAG_prune = prune_graph(B_DAG)
+        data_new = nodes_to_big_value(data)
+
+
+
+
+
+    
 
 
 

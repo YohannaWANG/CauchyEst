@@ -1,31 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sun May 23 11:57:04 2021
+Created on Sat Jun 19 10:17:50 2021
 
-@author: yohanna wang
-@email: yohanna.wang0924@gmail.com
-
+@author: yohanna
 """
-import os
-import time
 import itertools
 import numpy as np
-import networkx as nx
 from scipy import stats
 import matplotlib.pyplot as plt
 
-#from sklearn.utils.testing import ignore_warnings
-#from sklearn.exceptions import ConvergenceWarning
-
 import config
-
-from data import SynDAG, prune_graph
-from evl import DKL_ud, DCP
-
 p = config.setup()
 lgr = p.logger
 
+
+
+from data import SynDAG
+from evl import DCP
 
 
 def clime(data):
@@ -239,7 +231,7 @@ def regression(data, A_bin):
     return A_est
 
 
-def batch_least_square(data, A_bin):
+def batch_least_square_mean(data, A_bin, mb_size):
     '''
     Algorithm 6:
         Recovery algorithm for general Bayesian networks via Batch Least Squre + x
@@ -255,12 +247,13 @@ def batch_least_square(data, A_bin):
 
     '''
     n = p.n
-    mb_size = p.batch
+    
     A_est = np.zeros((n, n))
 
     for child in range(n):
         parents = [list(pa) for pa in (np.nonzero(A_bin[:, child]))]
         parents = list(itertools.chain(*parents))
+
         
         if len(parents) > 0:
             a_est_list = []
@@ -282,6 +275,51 @@ def batch_least_square(data, A_bin):
             A_est[parents, child] = a_est_mean
                 
     return A_est
+
+def batch_least_square_median(data, A_bin, mb_size):
+    '''
+    Algorithm 6:
+        Recovery algorithm for general Bayesian networks via Batch Least Squre + x
+
+    Learn coefficients through linear regression
+
+    Arguments:
+        data    : Input data;
+        A_bin   : The graph structure 
+
+    Return:
+        A_est   : Graph with learned coefficients
+
+    '''
+    n = p.n
+    
+    A_est = np.zeros((n, n))
+
+    for child in range(n):
+        parents = [list(pa) for pa in (np.nonzero(A_bin[:, child]))]
+        parents = list(itertools.chain(*parents))
+        
+        if len(parents) > 0:
+            a_est_list = []
+            
+            for i in range(0, data.shape[0], mb_size+len(parents)):
+                
+                if i + mb_size+len(parents) < data.shape[0]:
+                    X = data[i:i+mb_size+len(parents), parents]
+                    Y = data[i:i+mb_size+len(parents), child]
+                    '''
+                    Notes: A_hat = (X^T*X)^{-1}*X^T*Y
+                    '''
+                    a_est = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), Y)
+                    a_est_list.append(a_est)
+                    
+                else: break
+            a_est_median = np.median(a_est_list, axis=0)
+
+            A_est[parents, child] = a_est_median
+                
+    return A_est
+
 
 def least_square(data, A_bin):
     '''
@@ -411,7 +449,7 @@ def CauchyEst_median(data, A_bin):
             A_est_s = []  
             
 
-            for s in range(data.shape[0] - d):
+            for s in range(data.shape[0] - P):
                 
                 X = data[s:s+P, parents]
                 Y = np.expand_dims(data[s:s+P, child], axis=1)
@@ -419,12 +457,14 @@ def CauchyEst_median(data, A_bin):
                 if X.shape[0] == X.shape[1]:
                     
                     a_est_s = np.matmul(np.linalg.inv(X), Y)
+
                     A_est_s = np.append(A_est_s, a_est_s)
                 else:
                     break
             
-            ''' Find the median '''             
+            ''' Find the median '''  
             A_est_s = A_est_s.reshape(-1, P).T
+            
 
             A_est_median = np.median(A_est_s, axis=1)
 
@@ -532,6 +572,7 @@ def heuristic_extension_median(data, A_bin):
             if len(parents) == 1:
                 M = np.var(data[:, parents].T)
             else:
+                #print('parents bigger than 1')
                 M = np.cov(data[:, parents].T)
     
 
@@ -577,7 +618,7 @@ def heuristic_extension_median(data, A_bin):
 
             A_est_s = []  
             
-            for s in range(data.shape[0] - d + 1):
+            for s in range(data.shape[0] - P):
                 X = data[s:s+P, parents]
                 Y = np.expand_dims(data[s:s+P, child], axis=1)     
                 
@@ -591,10 +632,10 @@ def heuristic_extension_median(data, A_bin):
             A_est_s = A_est_s.reshape(-1, P).T
 
             MED = np.median(np.matmul(np.transpose(L), A_est_s), axis=1)
-            
+
             ''' Define estimates A_hat '''
             A_est_i = np.matmul(np.linalg.inv(np.transpose(L)), np.transpose(MED))
-            
+
             for i in range(len(parents)):
                 A_est[parents[i], child] = A_est_i[i]
 
@@ -673,201 +714,179 @@ def ground_truth_cov(data, A_bin, M_gt):
     gt_cov = np.cov(data.T)
     
     return dic_cov_idx, dic_cov_val, dic_cov_val_gt, gt_cov
-    
-
-def my_code_ud():
-    
-    Input = SynDAG(p)
-    #Input.visualise()
-    W_DAG_gt = Input.A
-
-    B_DAG_gt = Input.B
-
-    """Notes: prune a degree 10 graph into degree 5 graph"""
-    B_DAG = prune_graph(B_DAG_gt)
-    W_DAG = W_DAG_gt * B_DAG
-    
-    data = Input.X 
-    Z = Input.Z
-    
-    I = np.identity(p.n)
-    A = np.linalg.inv(I - W_DAG_gt)
-    B = np.transpose(np.linalg.inv(I - W_DAG_gt))
-    M = np.matmul(np.matmul(A, Z), B)
 
 
+def nodes_to_big_value(data):
+    n, s = p.n, p.s
+    mu, sigma = 10000, 1
+    num_noise_node = 2
 
-    #train_data, test_data = split_data(data)   
-    
-    #dic_cov_idx, dic_cov_val, dic_cov_val_gt, cov_gt = ground_truth_cov(data, B_DAG, M)    
+    for i in range(s):
+        nodes = np.sort(np.random.choice(n, size=num_noise_node, replace=False))
+        data[i, nodes] = np.random.normal(mu, sigma, len(nodes)) #np.array(10000 * np.ones(s)) #
+    return data
 
-    
+def list_to_big_value(data):
+    n, s = p.n, p.s
+    mu, sigma = 10000, 1
+    percent_of_sample = 5
+    num_noise_node = 2
+    sample_size = int(s * percent_of_sample / 100)
 
-    ''' Undirected graph'''
-    #print('GLASSO')
-    #cov_glasso_est = glasso_R(data)
-    print('EMP')
-    cov_emp_np, cov_emp_est = empirical_est(data)
-    #print('CLIME')
-    #cov_clime_est  = clime(test_data)
-    #cov_tiger_est  = tiger(test_data)
-    
-    #kl_glasso = DKL_ud(cov_glasso_est, cov_gt)    
-    #kl_emp_np = DKL_ud(cov_emp_np, cov_gt)
-    #kl_emp = DKL_ud(cov_emp_est, cov_gt)  
-    #kl_clime = DKL_ud(cov_clime_est, cov_gt)
-    #kl_tiger = DKL_ud(cov_tiger_est, cov_gt)
-    
-    
-    ''' Directed graph'''
-    #A_est_reg = regression(test_data, B_DAG)
-    print('LS')
-    A_est_ls  = least_square(data, B_DAG)
-    print('Batch LS')
-    A_est_ls_batch = batch_least_square(data, B_DAG)
-    print('CAUest')
-    A_est_cau_med = CauchyEst_median(data, B_DAG)
-    print('HECAU')
-    A_est_he_med = heuristic_extension_median(data, B_DAG)
-    #A_est_cau_trimmed = CauchyEst_trimmed(test_data, B_DAG)
-    #A_est_he_trimmed = heuristic_extension_trimmed(data, B_DAG)
-    
-    
-    #sigma_reg = sigma_estimator(data, A_est_ls)
-    
-    #kl_reg = DCP(train_data, test_data, W_DAG, A_est_reg)
-    kl_ls  = DCP(data,  W_DAG, A_est_ls, M, Z) 
-    kl_ls_batch  = DCP(data,  W_DAG, A_est_ls_batch, M, Z)
-    kl_cau_med = DCP(data,  W_DAG, A_est_cau_med, M, Z)
-    kl_he_med  = DCP(data,  W_DAG, A_est_he_med, M, Z)
-    #kl_cau_tri = DCP(train_data, test_data,  W_DAG, A_est_cau_trimmed)
-    #kl_he_tri  = DCP(train_data, test_data,  W_DAG, A_est_he_trimmed)
-    
-    #return kl_glasso, kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med
-    return  kl_ls, kl_ls_batch, kl_cau_med, kl_he_med
+    sample = np.sort(np.random.choice(s, size=sample_size, replace=False))
+
+    for i in sample:
+        nodes = np.sort(np.random.choice(n, size=num_noise_node, replace=False))
+        data[i, nodes] = np.random.normal(mu, sigma, num_noise_node)#np.array(10000 * np.ones(n))
+
+    return data
 
 
-def test():
-    KL_LS = []
-    KL_HE_MED = []
-    
-    for i in range(10):
-        Input = SynDAG(p)
-        #Input.visualise()
-        W_DAG = Input.A
-        print('W_DAG', W_DAG)
-        B_DAG = Input.B
-        data = Input.X 
-        Z = Input.Z  # Z is sigma^2
-        
-        I = np.identity(p.n)
-        A = np.linalg.inv(I - W_DAG)
-        B = np.linalg.inv(np.transpose(I - W_DAG))
-        ''' '''        
-        M = np.matmul(np.matmul(A, Z), B)
+def data_uniform(data):
 
-        
-        train_data, test_data = split_data(data)   
-        
-        dic_cov_idx, dic_cov_val, dic_cov_val_gt, cov_gt = ground_truth_cov(train_data, B_DAG, M)   
-        #cov_emp_np, cov_emp_est = empirical_est(test_data)
-        #kl_emp = DKL_ud(cov_emp_np, cov_gt)
-        #A_est_ls  = least_square(data, B_DAG)
-        A_est_he_med = heuristic_extension_median(data, B_DAG)
-        
-        #A_est_ls = batch_least_square(data, B_DAG)
-        #kl_ls  = DCP(train_data, test_data,  W_DAG, A_est_ls, M, Z)
-        
-        kl_he_med  = DCP(train_data, test_data,  W_DAG, A_est_he_med, M, Z)
-        
-        #KL_LS.append(kl_ls)
-        KL_HE_MED.append(kl_he_med)
-    
-    #print('KL_LS', KL_LS)
-    #print('LS_mean ', np.mean(KL_LS))
-    #print('LS_std ', np.std(KL_LS))
+    from data_noisy import missing_method
+    missing_mask, data_incomplete = missing_method(data)
 
-    print('KL_HE_MED', KL_HE_MED)
-    print('KL_HE_mean ', np.mean(KL_HE_MED))
-    print('KL_HE_std ', np.std(KL_HE_MED))
-    
-    
 def main():
-    print('node number is ', p.n)
-    KL_LS  = []
-    KL_LS_BATCH = []
-    KL_CAU_MED = []
-    KL_HE_MED = []
-    
-    KL_CAU_TRI = []
-    KL_HE_TRI  = []
-    
-    KL_GLASSO = []
-    KL_EMP_NP = []
-    KL_EMP    = []
-    KL_CLIME  = []
-    KL_TIGER  = []
-    
+    sample = np.array([100, 200, 300, 400, 500, 600, 700, 800, 900, 1000])
 
-    for i in range(1):
-        print('i = ', i)
- 
-        #kl_glasso,  kl_emp_np, kl_emp, kl_clime, kl_tiger, kl_ls, kl_cau_med, kl_he_med = my_code_ud()
-        #kl_emp_np, kl_emp, kl_clime, kl_ls, kl_ls_batch, kl_cau_med, kl_he_med = my_code_ud()
-        kl_ls, kl_ls_batch, kl_cau_med, kl_he_med = my_code_ud()
-        #KL_GLASSO.append(kl_glasso)
-        #KL_EMP_NP.append(kl_emp_np)
-        #KL_EMP.append(kl_emp)
-        #KL_CLIME.append(kl_clime)
-        #KL_TIGER.append(kl_tiger)
+    KL_LS = []
+    KL_BATCH_MED = []
+    KL_BATCH_MEAN = []
+    KL_CAU_TREE = []
+    KL_CAU_GEN = []
 
-        KL_LS.append(kl_ls)      
-        KL_LS_BATCH.append(kl_ls_batch)
-        KL_CAU_MED.append(kl_cau_med)
-        KL_HE_MED.append(kl_he_med)
-        #KL_CAU_TRI.append(kl_cau_tri)
-        #KL_HE_TRI.append(kl_he_tri)
-    
-    
-    #print('KL_GLASSO = ', np.mean(KL_GLASSO))
-    #print('KL_EMP_NP = ', np.mean(KL_EMP_NP))
-    #print('KL_EMP = ', np.mean(KL_EMP))
-    #print('KL_CLIME = ', np.mean(KL_CLIME))
-    #print('KL_TIGER = ', np.mean(KL_TIGER))
+    KL_LS_STD = []
+    KL_BATCH_MED_STD = []
+    KL_BATCH_MEAN_STD = []
+    KL_CAU_TREE_STD = []
+    KL_CAU_GEN_STD = []
 
-    print('KL_LS  =', np.mean(KL_LS))
-    print('KL_LS_BATCH = ', np.mean(KL_LS_BATCH))
-    print('KL_MED = ', np.mean(KL_CAU_MED))  # cauchy median
-    print('KL_HE = ', np.mean(KL_HE_MED))
-   
-    #print('KL_CAU_TRI =', np.mean(KL_CAU_TRI))
-    #print('KL_HE_TRI  =', np.mean(KL_HE_TRI))
-    
-    #print('KL_GLASSO_std = ', np.std(KL_GLASSO))
-    #print('KL_EMP_NP = ', np.std(KL_EMP_NP))
-    #print('KL_EMP_std = ', np.std(KL_EMP))
-    #print('KL_CLIME_std = ', np.std(KL_CLIME))
-    #print('KL_TIGER_std = ', np.std(KL_TIGER))
+    for i in range(len(sample)):
+        print('sample ', i)
+        for j in range(10):
+            print('j', j)
+            kl_ls = []
+            kl_batch_med = []
+            kl_batch_mean = []
+            kl_cau_tree = []
+            kl_cau_gen = []
 
-    print('KL_LS_std  =', np.std(KL_LS))
-    print('KL_LS_BATCH_std = ', np.std(KL_LS_BATCH))
-    print('KL_MED_std = ', np.std(KL_CAU_MED))  # cauchy median
-    print('KL_HE_std = ', np.std(KL_HE_MED))
+            p.s = sample[i]
+            Input = SynDAG(p)
+            # Input.visualise()
+            # plt.show()
+            W_DAG = Input.A
+
+            B_DAG = Input.B
+
+            """Notes: prune a degree 10 graph into degree 5 graph"""
+            # B_DAG = prune_graph(B_DAG_gt)
+            # W_DAG = W_DAG_gt * B_DAG
+
+            data = Input.X
+            # data = nodes_to_big_value(data)
+            data = list_to_big_value(data)
+            #print(data)
+
+            Z = Input.Z
+            I = np.identity(p.n)
+            A = np.linalg.inv(I - W_DAG)
+            B = np.transpose(np.linalg.inv(I - W_DAG))
+            M = np.matmul(np.matmul(A, Z), B)
+
+            A_est_ls = least_square(data, B_DAG)
+            kl1 = DCP(data, W_DAG, A_est_ls, M, Z)
+            kl_ls.append(kl1)
+            # print('kl1 \n', kl1)
+
+            A_est_ls_batch_med_20 = batch_least_square_median(data, B_DAG, 20)
+            kl2 = DCP(data, W_DAG, A_est_ls_batch_med_20, M, Z)
+            kl_batch_med.append(kl2)
+            # print('kl2 \n', kl2)
+
+            A_est_ls_batch_mean_20 = batch_least_square_mean(data, B_DAG, 20)
+            kl3 = DCP(data, W_DAG, A_est_ls_batch_mean_20, M, Z)
+            kl_batch_mean.append(kl3)
+            # print('kl3 \n', kl3)
+
+            A_est_cau_med = CauchyEst_median(data, B_DAG)
+            kl4 = DCP(data, W_DAG, A_est_cau_med, M, Z)
+            kl_cau_tree.append(kl4)
+            # print('kl4 \n', kl4)
+
+            A_est_he_med = heuristic_extension_median(data, B_DAG)
+            kl5 = DCP(data, W_DAG, A_est_he_med, M, Z)
+            kl_cau_gen.append(kl5)
+
+            # print('kl5 \n', kl5)
+        ''' Least square'''
+
+        kl_ls = np.median(kl_ls)
+        kl_ls_std = np.std(kl_ls)
+
+        KL_LS.append(kl_ls)
+        KL_LS_STD.append(kl_ls_std)
+
+        ''' Least square batch median'''
+        kl_batch_med = np.mean(kl_batch_med)
+        kl_batch_med_std = np.std(kl_batch_med)
+
+        KL_BATCH_MED.append(kl_batch_med)
+        KL_BATCH_MED_STD.append(kl_batch_med_std)
+
+        ''' Least square batch mean'''
+        kl_batch_mean = np.mean(kl_batch_mean)
+        kl_batch_mean_std = np.std(kl_batch_mean)
+
+        KL_BATCH_MEAN.append(kl_batch_mean)
+        KL_BATCH_MEAN_STD.append(kl_batch_mean_std)
+
+        '''Cauchy Tree '''
+        kl_cau_tree = np.mean(kl_cau_tree)
+        kl_cau_tree_std = np.std(kl_cau_tree)
+
+        KL_CAU_TREE.append(kl_cau_tree)
+        KL_CAU_TREE_STD.append(kl_cau_tree_std)
+
+        '''Cauchy General '''
+        kl_cau_gen = np.mean(kl_cau_gen)
+        kl_cau_gen_std = np.std(kl_cau_gen)
+
+        KL_CAU_GEN.append(kl_cau_gen)
+        KL_CAU_GEN_STD.append(kl_cau_gen_std)
+
+    print('KL_LS', KL_LS)
+    print('KL_BATCH_MED', KL_BATCH_MED)
+    print('KL_BATCH_MEAN', KL_BATCH_MEAN)
+    print('KL_CAU_TREE', KL_CAU_TREE)
+    print('KL_CAU_GEN', KL_CAU_GEN)
+
+    plt.figure(figsize=(18, 10))
+
+    plt.errorbar(sample, KL_LS, yerr=KL_LS_STD, label='LS', linewidth=3)
+    plt.errorbar(sample, KL_BATCH_MED, yerr=KL_BATCH_MED_STD, label='Batch_MED_LS (batch=20)', linewidth=3)
+    plt.errorbar(sample, KL_BATCH_MEAN, yerr=KL_BATCH_MEAN_STD, label='Batch_MEAN_LS (batch=20)', linewidth=3)
+    plt.errorbar(sample, KL_CAU_TREE, yerr=KL_CAU_TREE_STD, label='CauchyEstTree', linewidth=3)
+    plt.errorbar(sample, KL_CAU_GEN, yerr=KL_CAU_GEN_STD, label='CauchyEstGeneral', linewidth=3)
+
+    plt.legend(loc='upper right', fontsize=32)
+    plt.tick_params(axis='both', which='major', labelsize=35)
+    plt.xlabel('Sample size (100 nodes, 5% noisy sample, 2 noisy nodes) ', fontsize=35)
+    plt.ylabel('KL_Divergence', fontsize=35)
+    plt.grid(True)
+    plt.show()
+
+    plt.figure(figsize=(18, 10))
+    plt.errorbar(sample, KL_CAU_TREE, yerr=KL_CAU_TREE_STD, label='CauchyEstTree', linewidth=5)
+    plt.errorbar(sample, KL_CAU_GEN, yerr=KL_CAU_GEN_STD, label='CauchyEstGeneral', linewidth=5)
+
+    plt.legend(loc='upper right', fontsize=32)
+    plt.tick_params(axis='both', which='major', labelsize=35)
+    plt.xlabel('Sample size (100 nodes, 5% noisy sample, 2 noisy nodes) ', fontsize=35)
+    plt.ylabel('KL_Divergence', fontsize=35)
+    plt.grid(True)
+    plt.show()
 
 if __name__ == '__main__':
-    
     main()
-    #test()
-    #my_code_ud()
-
-
-
-
-
-
-
-
-
-
-
-    

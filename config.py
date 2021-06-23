@@ -12,12 +12,16 @@ n: number of nodes
 s: number of samples
 d: average degree of node
 '''
-n = 5
-s = 300
-d = 5
-ill = 3
+n = 100
+s = '100'
+d = 2
+d_limit = 5
+ill = 0
 
-batch = 200
+batch = 20
+
+mechanism = 'mcar'
+method = 'uniform'
 
 '''
 data arguments
@@ -28,8 +32,7 @@ options: 'ecoli70', 'magic-niab', 'magic-irri', 'arth150', #{'healthcare', 'sang
 '''
 load = 'syn'
 choice = 'ecoli70'
-train = 0.9
-test = 0.1
+
 
 '''
 data arguments
@@ -37,8 +40,8 @@ tg: type of graph, options: chain, er, sf, rt
 tn: type of noise, options: ev, uv, ca, ill, exp, gum
 th: threshold for weighted matrix
 '''
-tg = 'er' 
-tn = 'ill'
+tg = 'rt'
+tn = 'ev'
 th = 0.3
 
 '''
@@ -65,13 +68,19 @@ def parse():
     p = argparse.ArgumentParser(description="Chain Graph Structure Learning from Observational Data")
     
     p.add_argument('--n', type=int, default=n, help='number of nodes')
-    p.add_argument('--s', type=int, default=s, help='number of samples')
-    p.add_argument('--d', type=int, default=d, help='average degree of node')
-    p.add_argument('--batch', type=int, default=batch, help='number of batch size')
-    p.add_argument('--train', type=float, default=train, help='the proportion of training data')
-    p.add_argument('--test', type=float, default=test, help='the proportion of testing data')
-    p.add_argument('--ill', type=int, default=ill, help='number of ill conditioned nodes')
+    #p.add_argument('--s', type=int, default=s, help='number of samples')
+    p.add_argument('--s', nargs='+', help="a list of sample numbers")
     
+    p.add_argument('--d', type=int, default=d, help='average degree of node')
+    p.add_argument('--d_limit', type=int, default=d_limit, help='prune high-degree node')
+    p.add_argument('--batch', type=int, default=batch, help='number of batch size')
+    p.add_argument('--ill', type=int, default=ill, help='number of ill conditioned nodes')
+
+    p.add_argument('--mechanism', type=str, default='mcar',
+                        help='Missing data mechanism: 1.mcar, 2.mnar.')
+    p.add_argument('--method', type=str, default='uniform',
+                        help='method correlated to the missing mechanism.')
+
     p.add_argument('--choice', type=str, default=choice, help='choose which real bnlearn data to load')
     p.add_argument('--load', type=str, default=load, help='either load synthetic or real data')
 
@@ -148,13 +157,16 @@ def setup():
 
     # set seed
     s = p.seed
+    print('s', s)
     random.seed(s)
-
-    torch.manual_seed(s)
-    p.gen = torch.Generator().manual_seed(s)
+    print('random.seed', random.seed(s))
+    #torch.manual_seed(s)
+    #p.gen = torch.Generator().manual_seed(s)
 
     np.random.seed(s)
+    print('np.random.seed(s)', np.random.seed(s))
     p.rs = np.random.RandomState(s)
+    print('p.rs', p.rs)
     os.environ['PYTHONHASHSEED'] = str(s) 
 
 
@@ -164,3 +176,6 @@ def setup():
     p.device = torch.device('cuda') if p.gpu != '-1' and torch.cuda.is_available() else torch.device('cpu')   
 
     return p
+
+if __name__ == '__main__':
+    setup()
