@@ -18,12 +18,9 @@ import config
 p = config.setup()
 lgr = p.logger
 
-"""
-Experiments over 100 node, random tree graph, one parent, all expertiments
-normal data
-"""
+
 sample = np.array([1000, 2000, 3000, 4000, 5000])
-print(sample)
+
 def main():
     
     KL_GLASSO = []
