@@ -29,9 +29,9 @@ Including:
 
 NOTES: I didn't add other 22 discrete bayesian network datasets
 
-Author: Yohanna
+Author: 
 Date: 2021-05-23
-Email: yohanna.wang0924@gmail.com
+Email:
 "
 
 load_data <- function(choice){
@@ -77,6 +77,7 @@ load_data <- function(choice){
 
 get_graph <- function(choice){ 
   library(bnlearn)
+  #network <- readRDS("Data/ecoli70.rds")
   network <- load_data(choice)
   
   " Get binary adj matrix and extract the coefficients between all parents and children"
@@ -90,6 +91,7 @@ get_graph <- function(choice){
   " X = AX + b 
   Initialize an all-zero matrix to store inception value (b) "
   interception <- matrix(0, n, p)
+  sd_num <- matrix(0, n, p)
   colnames(interception) <- nodes
   rownames(interception) <- nodes
   
@@ -97,6 +99,16 @@ get_graph <- function(choice){
   G_weighted <- matrix(0, n, p)
   colnames(G_weighted) <- nodes
   rownames(G_weighted) <- nodes
+  
+  " Initialize an zero matrix for std"
+  G_std<- matrix(0, n, p)
+  colnames(G_std) <- nodes
+  rownames(G_std) <- nodes
+  for (i in 1:nrow(G_binary)) {
+   #print(network[[i]]$sd)
+   idx_name <- names(coef[i])
+   G_std[idx_name, idx_name] <- network[[i]]$sd
+  }
   
   for (i in 1:nrow(G_binary)) {
     " Then find each coefficient pairs" 
@@ -132,7 +144,7 @@ get_graph <- function(choice){
       }
     }
   }
-  return(list(G_binary, G_weighted, interception))
+  return(list(G_binary, G_weighted, G_std, interception))
 }
 
 " Function: Estimate sparse undirected graphical models. i.e. Gaussian precision matrix

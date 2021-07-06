@@ -12,16 +12,13 @@ n: number of nodes
 s: number of samples
 d: average degree of node
 '''
-n = 100
+n = 3
 s = '100'
 d = 2
-d_limit = 5
-ill = 0
-
+d_limit = 1
+ill = 1
 batch = 20
 
-mechanism = 'mcar'
-method = 'uniform'
 
 '''
 data arguments
@@ -31,18 +28,16 @@ options: 'syn', 'real'
 options: 'ecoli70', 'magic-niab', 'magic-irri', 'arth150', #{'healthcare', 'sangiovese', 'mehra'}
 '''
 load = 'syn'
-choice = 'ecoli70'
-
+choice = 'arth150'
 
 '''
 data arguments
 tg: type of graph, options: chain, er, sf, rt
 tn: type of noise, options: ev, uv, ca, ill, exp, gum
-th: threshold for weighted matrix
 '''
-tg = 'rt'
-tn = 'ev'
-th = 0.3
+tg = 'er'
+tn = 'ca'
+
 
 '''
 data arguments
@@ -76,18 +71,11 @@ def parse():
     p.add_argument('--batch', type=int, default=batch, help='number of batch size')
     p.add_argument('--ill', type=int, default=ill, help='number of ill conditioned nodes')
 
-    p.add_argument('--mechanism', type=str, default='mcar',
-                        help='Missing data mechanism: 1.mcar, 2.mnar.')
-    p.add_argument('--method', type=str, default='uniform',
-                        help='method correlated to the missing mechanism.')
-
     p.add_argument('--choice', type=str, default=choice, help='choose which real bnlearn data to load')
     p.add_argument('--load', type=str, default=load, help='either load synthetic or real data')
 
-
     p.add_argument('--tg', type=str, default=tg, help='type of graph, options: er, sf')
     p.add_argument('--tn', type=str, default=tn, help='type of noise, options: ev, uv, exp, gum')
-    p.add_argument('--th', type=float, default=th, help='threshold for weighted matrix')
 
     p.add_argument('--sf', type=float, default=sf, help='scaling factor for range of binary DAG adjacency')    
 

@@ -65,8 +65,8 @@ class SynDAG:
         G = nx.generators.erdos_renyi_graph(n=n, p=p, seed=5)
 
         U = nx.to_numpy_matrix(G)
-        B = np.tril(U, k=-1)
 
+        B = np.tril(U, k=-1)
         return B
 
     @staticmethod
@@ -85,9 +85,8 @@ class SynDAG:
         n, s = p.n, p.s
         G = nx.random_tree(n, seed=5)
         U = nx.to_numpy_matrix(G)
-
         B = np.tril(U, k=-1)
-        '''
+        
         A = np.zeros((n,n))
         root = np.random.randint(n)
         for i in range(n):
@@ -99,7 +98,7 @@ class SynDAG:
                     A[j,i]=1
                 elif i in nx.shortest_path(G,root,j):
                     A[i,j]=1
-        '''
+    
         return B
 
     @staticmethod
@@ -129,8 +128,8 @@ class SynDAG:
                 "The type of graph is either unknown or has not been implemented")
 
         # np.random.permutation permutes first axis only
-        P = p.rs.permutation(np.eye(p.n))
-        B = P.T @ B @ P
+        #P = p.rs.permutation(np.eye(p.n))
+        #B = P.T @ B @ P
 
         return B
 
@@ -259,7 +258,7 @@ class SynDAG:
                 sigma = 1.0
                 N = r.normal(scale=sigma, size=s)
             elif t == 'uv':
-                sigma = r.uniform(low=1.0, high=2.0)
+                sigma = r.uniform(low=10.0, high=20.0)
                 N = r.normal(scale=sigma, size=s)
                 #N = r.normal(scale=r.uniform(low=1.0, high=2.0), size=s)
             elif t == 'ca':
@@ -267,10 +266,11 @@ class SynDAG:
                 N = np.random.standard_cauchy(size=s)
             elif t == 'ill':    
                 if v in nodes_ill:
-                    sigma = 10**-8
+                    print('ill node', v)
+                    sigma = 10**-10
                     N = r.normal(scale=sigma, size=s)
                 else:
-                    sigma = 2
+                    sigma = 1.0
                     N = r.normal(scale=sigma, size=s)
             elif t == 'exp':
                 sigma = 1.0
@@ -297,13 +297,14 @@ class SynDAG:
         nodes_ill = nodes[:p.ill]
         
         Sigma = {}
-        
+
         for v in list(nx.topological_sort(G)):
             P = list(G.predecessors(v))
             X[:, v], sigma = _SEM(X[:, P], A[P, v], v, nodes_ill)
             Sigma[v] = sigma
         sorted_sigma = np.array(sorted(Sigma.items()))[:, 1]
         Z = np.diag(sorted_sigma)
+
         
         return X, Z
 
