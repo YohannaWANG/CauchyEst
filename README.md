@@ -15,6 +15,13 @@ We analyze the commonly used node-wise least squares regression **{LeastSquares}
 We also propose a new estimator **{CauchyEst}** based on some interesting properties of Cauchy random variables, and prove near-optimal sample complexity for polytrees.
 Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGeneral}** compare favorably to **{LeastSquares}**.                               
 
+Gaussian Bayesian networks (a.k.a.\ linear Gaussian structural equation models) are widely used to model causal interactions among continuous variables.
+In this work, we study the problem of **learning a fixed-structure Gaussian Bayesian network up to a bounded error in total variation distance.**
+We analyze the commonly used node-wise least squares regression **LeastSquares** and prove that it has the near-optimal sample complexity.
+We also study a couple of new algorithms for the problem:
+- **BatchAvgLeastSquares** takes the average of several batches of least squares solutions at each node, so that one can interpolate between the batch size and the number of batches. We show that **BatchAvgLeastSquares** also has near-optimal sample complexity. 
+- **CauchyEst** takes the median of solutions to several batches of linear systems at each node. We show that the algorithm specialized to polytrees, **CauchyEstTree**, has near-optimal sample complexity.
+
 ## Example
 <img width="820" align="center" src="docs/images/example.png"> 
 
@@ -40,11 +47,12 @@ Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGener
 ## Contents
 
 - **Data**  - Real Bayesian network data from bnlearn;
-- `data.py` - synthetic chain graph data, including graph simulation and data simulation. Load real Bnlearn data 
-- `evaluate.py` - algorithm accuracy evaluation 
+- `data.py` - synthetic DAG data, including graph simulation and data simulation. Load real Bnlearn data 
+- `evl.py` - algorithm accuracy evaluation based on KL-divergence; 
 - `config.py` - Set parameters for Bayesian network (eg. node number, graph degree, sample size)
-- `utils.py` - simulation parameters, such as selecte graph type, node number, data type, graph degree, etc.  
+- `methods.py` - the implementation of all algorithms
 - `utils.R` - load bnlearn graph; Run CLIME algorithm
+- `main.py` - Run some examples of our algorithm
 
 ## Parameters
 
@@ -67,7 +75,7 @@ The simplest way to try out DCOV is to run a simple example:
 ```bash
 $ git clone https://github.com/YohannaWANG/CauchyEst.git
 $ cd CauchyEst/
-$ python CauchyEst/demo.py
+$ python CauchyEst/main.py
 ```
 
 ## Runing as a command
@@ -76,7 +84,7 @@ Alternatively, if you have a CSV data file `X.csv`, you can install the package 
 ```bash
 $ pip install git+git://github.com/YohannaWANG/CauchyEst
 $ cd CauchyEst
-$ python main.py --regress_method mgcv --n 50 --s 1000 --d 4 
+$ python main.py --n 100 --d 5 --tg 'er' --tn 'uv' 
 ```
 
 ## Algorithms
@@ -101,7 +109,7 @@ $ python main.py --regress_method mgcv --n 50 --s 1000 --d 4
 
 ## Open questions
 
-- The most prominent question raised by our work is whether we can rigorously explain the superior performance of **{CauchyEst}* and **{CauchyEstGeneral}** in the experiments. 
+
 - One can view **{LeastSquares}** as a special case of **{CauchyEst}** by using only a **{single}** batch (with >>p samples) and enforcing Algorithm 3 to use the least squares solution. It would be interesting to see if one can design an algorithm that interpolates between **{LeastSquares}** and **{CauchyEst}** while exhibiting a tradeoff between `number of batches` and `sample complexity`. Some preliminary experiments on this trade-off are provided in the supplementary material.
 - The current work only analyzes the sample complexity in the case that the distributions are realizable by the given structure. It remains an open question to guarantee bounds on the error in the non-realizable setting, i.e., to find the distribution that is best fitted by the given structure. 
 
@@ -113,53 +121,4 @@ If you use any part of this code in your research or any engineering project, pl
 Please feel free to contact us if you meet any problem when using this code. We are glad to hear other advise and update our work. 
 We are also open to collaboration if you think that you are working on a problem that we might be interested in it.
 Please do not hestitate to contact us!
-
-
-
-
-
-
-
-## TODO tasks (eval.py, algo.py, and main.py)
-
-```diff
-+ (Done) General synthetic SEM data;
-+ (Done) (FIXED) <**R language**>: bnlearn R data
-+ (Done) Tree structure synthetic data;
- 
-+ (Done) DAG: Liear regression algorithm;
-+ (Done) DAG: Least square algorithm;
-+ (Done) Undirected graph: GLASSO algotirhm;
-+ (Done) Undirected graph: empirical estimator;
- 
-+ (Done) Performance evaluation (KL-distance) on DAG;
-+ (Done) Performance evaluation (KL-distance) on Undirected graph;
-
-+ (Done) Overleaf: algorithm 1;
-+ (Done) Overleaf: algorithm 2;
-+ (Done) Overleaf: algorithm 3;
-+ (Done) Overleaf: algorithm 4;
-+ (Done) Add R CLIME & TIGER algorithm;
-+ (Done) Code for generate plot;
-+ (Done) Data: synthetic ill-conditioned data;
-+ (Done) Experiments: Ill-conditioned models. Like say one of the variables has noise variance very close to 0;
-+ (Done) Experiments: how the error decreases for empirical and GLASSO on separate plots;
-+ (Done) For distributions generated by degree 10 Bayes network, run our three algorithms with d=5. See how fast the errors converge.
-+ (Done) Real datasets from bnlearn
-+ (Done) Ill-conditioned models. Like say one of the variables has noise variance very close to 0. Hopefully, here we can also find some difference between CauchyEst and CauchyEstGeneral;
-+ (Done) some fraction have  N = r.normal(scale = 10^-10) others have N = r.normal(scale = 1.0) as before;
-+ (Done) for each server job, try running on "1 algorithm, 1 parameter setting, X samples". that way you can parallelize quite a lot and you can plot each graph line (with error bars) as soon as one of these jobs complete.
-
-- (TODO) 100 nodes, polytree; 100 nodes d2,ER; 100 nodes d5 ER; (40 iters per sample size)
-- (TODO) 1 figure for all algorithms ; 1 figure for our three algorithms;
-- (TODO) Set the noiser variance to be 1;
-- (TODO) Do ill-conditioned exp with poly-tree and degree-2, degree 5, 40 iters, with one ill-conditioned node; 
-- (TODO) Two figures for each case, one with 1 ill-conditioned node, one with 5 ill-conditioned node;
-- (TODO) Agnoistic 
-- (TODO) Average batch median algorithm & experiment.
-- (TODO) bnlearn 104 node dataset-  experiments.
-```
-
-
-
 
