@@ -8,13 +8,7 @@
 
 
 ## Introduction
-Gaussian Bayesian networks (a.k.a.\ linear Gaussian structural equation models) are widely used to model causal interactions among continuous variables.
-In this work, we study the problem of **learning a fixed-structure Gaussian Bayesian network up to a bounded error in total variation distance.** 
-
-We analyze the commonly used node-wise least squares regression **{LeastSquares}** and prove that it has the near-optimal sample complexity.
-We also propose a new estimator **{CauchyEst}** based on some interesting properties of Cauchy random variables, and prove near-optimal sample complexity for polytrees.
-Experimentally, we show that **{CauchyEst}** and its extension **{CauchyEstGeneral}** compare favorably to **{LeastSquares}**.                               
-
+                          
 Gaussian Bayesian networks (a.k.a.\ linear Gaussian structural equation models) are widely used to model causal interactions among continuous variables.
 In this work, we study the problem of **learning a fixed-structure Gaussian Bayesian network up to a bounded error in total variation distance.**
 We analyze the commonly used node-wise least squares regression **LeastSquares** and prove that it has the near-optimal sample complexity.
@@ -101,9 +95,9 @@ $ python main.py --n 100 --d 5 --tg 'er' --tn 'uv'
 
 ## Performance
 
-100 nodes, degree 5, ER graph     | Effect of changing batch size, 100 nodes, Random Tree graph
+100 nodes, degree 5, ER graph     | Noisy data(5% noisy sample, 5/100 noisy nodes), d=5, ER graph
 :--------------------------------------------------------------------:|:-----------------------------------------------------------------------------------:
-<img width="400" alt="characterization" src="/docs/images/100_node_syn_uv_d5_ER.png" >  |  <img width="400" alt="characterization" src="/docs/images/Batch_LS_100node_randomTree.png" >
+<img width="400" alt="characterization" src="/docs/results/exp1_100_er_d5_normal.png" >  |  <img width="400" alt="characterization" src="/docs/results/exp4_rt_100_gaussian_5s_5n.png" >
 
 
 
