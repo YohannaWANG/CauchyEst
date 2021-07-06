@@ -100,7 +100,7 @@ $ python main.py --n 100 --d 5 --tg 'er' --tn 'uv'
 
 100 nodes, degree 5, ER graph     | Noisy data(5% noisy sample, 5/100 noisy nodes), d=5, ER graph
 :--------------------------------------------------------------------:|:-----------------------------------------------------------------------------------:
-<img width="400" alt="characterization" src="/docs/images/results/exp1_100_er_d5_normal.png" >  |  <img width="400" alt="characterization" src="/docs/images/results/exp4_rt_100_gaussian_5s_5n.png" >
+<img width="400" alt="characterization" src="/docs/results/exp1_100_er_d5_normal.png" >  |  <img width="400" alt="characterization" src="/docs/results/exp4_rt_100_gaussian_5s_5n.png" >
 
 
 
