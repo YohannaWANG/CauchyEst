@@ -88,7 +88,7 @@ $ python main.py --n 100 --d 5 --tg 'er' --tn 'uv'
 ## Algorithms
 - ![#f03c15](https://via.placeholder.com/15/f03c15/000000?text=+)  **Algorithm 1** states our two-phased recovery approach. We estimate the coefficients of the Bayesian network in the first phase and use them to recover the variances in the second phase.
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo1.png" >
-- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) **Algorithm 2** is recovering the coefficients in a Bayesian network using a linear least squares estimator. 
+- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) **Algorithm 2** is the variance recovery algorithm given coefficient estimates.
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo2.png">    
 - ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) **Algorithm 3** is recovering the coefficients in a Bayesian network using a linear least squares estimator.
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo3.png" >  
