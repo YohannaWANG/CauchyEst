@@ -62,10 +62,10 @@ Experimentally, we show that for uncontaminated, realizable data, the **LeastSqu
 | `d`          |  int |  average degree of node          |  -            |
 | `ill`        |  int |  number of ill conditioned nodes | - |
 | `batch`      |  int |  number of batch size            | - |
-| `load`       |  str |  load synthetic or real data     |   'syn', 'real' |
-| `choice`     |  str |  choice which real data          |options: 'ecoli70', 'magic-niab', 'magic-irri', 'arth150'|
-| `tg`         |  str |  type of a graph                 |  'chain', 'er', 'sf', 'rt' |
-| `tn`         |  str |  type of noise                   |  'ev', 'uv', 'ca', 'ill', 'exp', 'gum' |
+| `load`       |  str |  load synthetic or real data     |   `syn`, `real` |
+| `choice`     |  str |  choice which real data          |`ecoli70`, `magic-niab`, `magic-irri`, `arth150`|
+| `tg`         |  str |  type of a graph                 |  `chain`, `er`, `sf`, `rt` |
+| `tn`         |  str |  type of noise                   |  `ev`, `uv`, `ca`, `ill`, `exp`, `gum` |
 
 
 ## Running a simple demo
