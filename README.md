@@ -18,6 +18,7 @@ We analyze the commonly used node-wise least squares regression **LeastSquares**
 We also study a couple of new algorithms for the problem:
 - **BatchAvgLeastSquares** takes the average of several batches of least squares solutions at each node, so that one can interpolate between the batch size and the number of batches. We show that **BatchAvgLeastSquares** also has near-optimal sample complexity. 
 - **CauchyEst** takes the median of solutions to several batches of linear systems at each node. We show that the algorithm specialized to polytrees, **CauchyEstTree**, has near-optimal sample complexity.
+
 Experimentally, we show that for uncontaminated, realizable data, the **LeastSquares** algorithm performs best, but in the presence of contamination or DAG misspecification, **CauchyEst, CauchyEstTree** and **BatchAvgLeastSquares** respectively perform better.
 
 ## Example
