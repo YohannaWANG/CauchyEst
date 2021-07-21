@@ -94,9 +94,12 @@ $ python main.py --n 100 --d 5 --tg 'er' --tn 'uv'
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo3.png" >  
 - ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) **Algorithm 4** is a generalization of the least square algorithm. 
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo4.png" >    
-- ![#d03c15](https://via.placeholder.com/15/d03c15/000000?text=+) **Algorithm 5** is a coefficient recovery algorithm based on Cauchy random variables.
+- ![#d03c15](https://via.placeholder.com/15/d03c15/000000?text=+) **Algorithm 5** is a coefficient recovery algorithm based on Cauchy random variables (for variable with p parents).
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo5.png" >    
-
+- ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) **Algorithm 6**  is a coefficient recovery algorithm based on Cauchy random variables (for general Bayesian networks).
+   <img width="800" align ="center" alt="characterization" src="/docs/images/algo6.png" >  
+- ![#f03c15](https://via.placeholder.com/15/f03c15/000000?text=+) **Algorithm 7** works for the special case of polytree Bayesian networks.
+   <img width="800" align ="center" alt="characterization" src="/docs/images/algo7.png" >
 ## Performance
 
 100 nodes, degree 5, ER graph     | Noisy data(5% noisy sample, 5/100 noisy nodes), d=5, ER graph
