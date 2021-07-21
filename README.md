@@ -92,10 +92,9 @@ $ python main.py --n 100 --d 5 --tg 'er' --tn 'uv'
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo2.png">    
 - ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) **Algorithm 3** is recovering the coefficients in a Bayesian network using a linear least squares estimator.
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo3.png" >  
-- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) **Algorithm 4** is our CauchyEst algorithm for variable with p parents.
-- is our CauchyEst algorithm for recovering the coefficients in polytree Bayesian networks.
+- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) **Algorithm 4** is a generalization of the least square algorithm. 
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo4.png" >    
-- ![#d03c15](https://via.placeholder.com/15/d03c15/000000?text=+) **Algorithm 5** extend CauchyEst algorithm to general Bayesian networks.
+- ![#d03c15](https://via.placeholder.com/15/d03c15/000000?text=+) **Algorithm 5** is a coefficient recovery algorithm based on Cauchy random variables.
    <img width="800" align ="center" alt="characterization" src="/docs/images/algo5.png" >    
 
 ## Performance
