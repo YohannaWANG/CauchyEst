@@ -8,6 +8,9 @@
 
 # Learning Sparse Fixed-Structure Gaussian Bayesian Networks
 
+This is the implementation of the following paper:
+
+[Arnab Bhattacharyya](https://www.comp.nus.edu.sg/~arnab/), [Davin Choo](http://davinchoo.com/), [Rishikesh Gajjala](https://sites.google.com/view/gajjala), [Sutanu Gayen](https://www.comp.nus.edu.sg/~sutanu/), and [Wang Yuhao](https://yohannawang.com/) "[Learning Sparse Fixed-Structure Gaussian Bayesian Networks](https://arxiv.org/pdf/2107.10450.pdf)." arXiv preprint arXiv:2107.10450 (2021).
 
 
 ## Introduction
