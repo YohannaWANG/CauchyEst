@@ -41,7 +41,7 @@ Experimentally, we show that for uncontaminated, realizable data, the **LeastSqu
    - `matplotlib`
    - `torch`: Optional.
 - **R 4.0.0**
-   - `rpy2`: Python interface, enables calling R from Python. Install [rpy2](https://pypi.org/project/rpy2/) first.
+   - `rpy2`: Python interface, enables calling R from Python. Install [rpy2](https://pypi.org/project/rpy2/) first
    - `bnlearn` : [Bayesian network learning and inference](bnlearn.com) 
    - `glasso` : [Graphical Lasso: Estimation of Gaussian Graphical Models](https://cran.r-project.org/web/packages/glasso/index.html)
    - `flare`: [Family of Lasso Regression](https://cran.r-project.org/web/packages/flare/index.html)
@@ -50,7 +50,7 @@ Experimentally, we show that for uncontaminated, realizable data, the **LeastSqu
 
 - **Data**  - Real Bayesian network data from bnlearn;
 - `data.py` - synthetic DAG data, including graph simulation and data simulation. Load real Bnlearn data 
-- `evl.py` - algorithm accuracy evaluation based on KL-divergence; 
+- `evl.py` - algorithm accuracy evaluation based on KL-divergence
 - `config.py` - Set parameters for Bayesian network (eg. node number, graph degree, sample size)
 - `methods.py` - the implementation of all algorithms
 - `utils.R` - load bnlearn graph; Run CLIME algorithm
@@ -73,7 +73,7 @@ Experimentally, we show that for uncontaminated, realizable data, the **LeastSqu
 
 ## Running a simple demo
 
-The simplest way to try out DCOV is to run a simple example:
+The simplest way to try out CauchyEst is to run a simple example:
 ```bash
 $ git clone https://github.com/YohannaWANG/CauchyEst.git
 $ cd CauchyEst/
