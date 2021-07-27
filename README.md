@@ -125,7 +125,7 @@ If you use any part of this code in your research or any engineering project, pl
 }
 ```
 ## Contacts
-
+[![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://GitHub.com/YohannaWANG/CauchyEst)
 Please feel free to contact us if you meet any problem when using this code. We are glad to hear other advise and update our work. 
 We are also open to collaboration if you think that you are working on a problem that we might be interested in it.
 Please do not hestitate to contact us!
