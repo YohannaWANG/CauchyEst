@@ -116,7 +116,14 @@ $ python main.py --n 100 --d 5 --tg 'er' --tn 'uv'
 
 ## Citation
 If you use any part of this code in your research or any engineering project, please cite our paper:
-
+```
+@article{bhattacharyya2021learning,
+  title={Learning Sparse Fixed-Structure Gaussian Bayesian Networks},
+  author={Bhattacharyya, Arnab and Choo, Davin and Gajjala, Rishikesh and Gayen, Sutanu and Wang, Yuhao},
+  journal={arXiv preprint arXiv:2107.10450},
+  year={2021}
+}
+```
 ## Contacts
 
 Please feel free to contact us if you meet any problem when using this code. We are glad to hear other advise and update our work. 
