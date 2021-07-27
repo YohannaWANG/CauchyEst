@@ -15,7 +15,7 @@ This is the implementation of the following paper:
 
 ## Introduction
                           
-Gaussian Bayesian networks (a.k.a.\ linear Gaussian structural equation models) are widely used to model causal interactions among continuous variables.
+Gaussian Bayesian networks (a.k.a. linear Gaussian structural equation models) are widely used to model causal interactions among continuous variables.
 In this work, we study the problem of **learning a fixed-structure Gaussian Bayesian network up to a bounded error in total variation distance.**
 We analyze the commonly used node-wise least squares regression **LeastSquares** and prove that it has the near-optimal sample complexity.
 We also study a couple of new algorithms for the problem:
@@ -48,7 +48,7 @@ Experimentally, we show that for uncontaminated, realizable data, the **LeastSqu
 
 ## Contents
 
-- **Data**  - Real Bayesian network data from bnlearn;
+- **Data**  - Real Bayesian network data from bnlearn
 - `data.py` - synthetic DAG data, including graph simulation and data simulation. Load real Bnlearn data 
 - `evl.py` - algorithm accuracy evaluation based on KL-divergence
 - `config.py` - Set parameters for Bayesian network (eg. node number, graph degree, sample size)
