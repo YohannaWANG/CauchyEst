@@ -384,30 +384,3 @@ def in_out__degree(B_DAG):
     
     nodes = [n for n , i in enumerate(degree_all) if i >= 0]
     degree = list(filter((0).__le__, degree_all))    
-
-
-
-if __name__ == '__main__':
-
-    for i in range(1):
-        p.s = 100
-        Input = SynDAG(p)
-        Input.visualise()
-        plt.show()
-
-        W_DAG = Input.A
-        B_DAG = Input.B
-        data = Input.X 
-        
-        Z,  M = get_M(Input)
-        #B_DAG_prune = prune_graph(B_DAG)
-        data_new = nodes_to_big_value(data)
-
-
-
-
-
-    
-
-
-
